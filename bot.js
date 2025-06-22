@@ -8,7 +8,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors'); // allow web page to connect
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const TOKEN = process.env.TOKEN;
 
 // Middleware
 app.use(cors());
@@ -52,6 +53,26 @@ app.listen(PORT, () => {
 
 const token = process.env.TOKEN;
 const bot = new TelegramBot(token, { polling: true });
+
+
+
+app.get('/telegram-image/:fileId', async (req, res) => {
+  const fileId = req.params.fileId;
+
+  try {
+    const file = await bot.getFile(fileId);
+    const fileUrl = `https://api.telegram.org/file/bot${TOKEN}/${file.file_path}`;
+    return res.redirect(fileUrl);
+  } catch (err) {
+    console.error("Failed to get Telegram file:", err);
+    return res.status(404).send('Image not found');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Telegram image server listening on http://localhost:${PORT}`);
+});
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -198,8 +219,8 @@ bot.on('message', async (msg) => {
 
     // Send photo + caption
     bot.sendPhoto(process.env.ADMIN_CHAT_ID, state.data.image, {
-        caption: adminMessage,
-        reply_markup: {
+      caption: adminText,
+      reply_markup: {
           inline_keyboard: [[
             {
               text: '✏️ Edit Product',
@@ -266,21 +287,24 @@ bot.on('message', async (msg) => {
       session.step = 'edit_name';
       return bot.sendMessage(chatId, `✏️ ስም: ${session.data.name}\nEnter new name:`);
     } else if (choice === '2') {
+      session.step = 'edit_code';
+      return bot.sendMessage(chatId, `✏️ Code: ${session.data.cost || 'N/A'}\nEnter new code:`);
+    } else if (choice === '3') {
       session.step = 'edit_cost';
       return bot.sendMessage(chatId, `✏️ የተገዛበት ዋጋ: ${session.data.cost || 'N/A'}\nEnter new cost price:`);
-    } else if (choice === '3') {
+    } else if (choice === '4') {
       session.step = 'edit_selling';
       return bot.sendMessage(chatId, `✏️ የሚሸጥበት ዋጋ: ${session.data.selling || 'N/A'}\nEnter new selling price:`);
-    } else if (choice === '4') {
+    } else if (choice === '5') {
       session.step = 'edit_store';
       return bot.sendMessage(chatId, `✏️ Store ያለ ፈሬ: ${session.data.amount_store || 'N/A'}\nEnter new amount:`);
-    } else if (choice === '5') {
+    } else if (choice === '6') {
       session.step = 'edit_suq';
       return bot.sendMessage(chatId, `✏️ Suq ያለ ፈሬ: ${session.data.amount_suq || 'N/A'}\nEnter new amount:`);
-    } else if (choice === '6') {
+    } else if (choice === '7') {
       session.step = 'edit_image';
       return bot.sendMessage(chatId, `📸 አዲስ Photo ይላኩ:`);
-    } else if (choice === '7') {
+    } else if (choice === '8') {
       // ✅ Finish Editing
       await db.ref('products/' + session.key).update({
         ...session.data,
@@ -299,13 +323,13 @@ bot.on('message', async (msg) => {
 👤 Edited by: @${msg.from.username || msg.from.first_name}
       `.trim();
 
-      bot.sendPhoto(process.env.ADMIN_CHAT_ID, state.data.image, {
-        caption: adminMessage,
+      bot.sendPhoto(process.env.ADMIN_CHAT_ID, session.data.image, {
+        caption: adminText,
         reply_markup: {
           inline_keyboard: [[
             {
               text: '✏️ Edit Product',
-              callback_data: `admin_edit_${state.data.code}`
+              callback_data: `admin_edit_${session.data.code}`
             }
           ]]
         }
@@ -327,6 +351,7 @@ bot.on('message', async (msg) => {
   };
 
   if (session.step === 'edit_name' && msg.text) return updateAndReturn('name', msg.text);
+  if (session.step === 'edit_code' && msg.text) return updateAndReturn('code', msg.text);
   if (session.step === 'edit_cost' && msg.text) return updateAndReturn('cost', msg.text);
   if (session.step === 'edit_selling' && msg.text) return updateAndReturn('selling', msg.text);
   if (session.step === 'edit_store' && msg.text) return updateAndReturn('amount_store', msg.text);
@@ -343,12 +368,13 @@ function sendEditMenu(chatId, product) {
   ✏️ መቀየር የምትፈልጉትን ቁጥር ምርጥ:
   
   1) ስም: ${product.name}
-  2) የተገዛበት ዋጋ: ${product.cost || 'N/A'}
-  3) የሚሸጥበት ዋጋ: ${product.selling || 'N/A'}
-  4) Store ያለ ፈሬ: ${product.amount_store || 'N/A'}
-  5) Suq ያለ ፈሬ: ${product.amount_suq || 'N/A'}
-  6) 🖼️ Image
-  7) ✅ Finish Editing
+  2) Code: ${product.code}
+  3) የተገዛበት ዋጋ: ${product.cost || 'N/A'}
+  4) የሚሸጥበት ዋጋ: ${product.selling || 'N/A'}
+  5) Store ያለ ፈሬ: ${product.amount_store || 'N/A'}
+  6) Suq ያለ ፈሬ: ${product.amount_suq || 'N/A'}
+  7) 🖼️ Image
+  8) ✅ Finish Editing
     `.trim();
   
     bot.sendMessage(chatId, menu);
@@ -393,7 +419,7 @@ function sendEditMenu(chatId, product) {
   
       bot.answerCallbackQuery(callbackQuery.id);
       sendEditMenu(chatId, foundProduct);
-      return bot.sendPhoto(chatId, foundProduct.image, { caption: `7) 🖼️ Current Image` });
+      return bot.sendPhoto(chatId, foundProduct.nodimage, { caption: `7) 🖼️ Current Image` });
     }
   });
   

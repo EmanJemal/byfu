@@ -1,12 +1,4 @@
-require('dotenv').config();
-const express = require('express');
-const TelegramBot = require('node-telegram-bot-api');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const TOKEN = process.env.TOKEN;
-
-const bot = new TelegramBot(TOKEN);
 
 app.get('/telegram-image/:fileId', async (req, res) => {
   const fileId = req.params.fileId;
