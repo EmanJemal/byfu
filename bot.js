@@ -76,6 +76,19 @@ app.listen(PORT, () => {
 
 const admin = require('firebase-admin');
 
+const base64 = process.env.FIREBASE_CONFIG_BASE64;
+const jsonStr = Buffer.from(base64, 'base64').toString('utf8');
+console.log(jsonStr); // Make sure this prints full JSON with no truncation
+
+try {
+  const parsed = JSON.parse(jsonStr);
+  console.log('JSON parsed successfully!');
+} catch (e) {
+  console.error('JSON parsing error:', e);
+}
+ // just exit after test
+
+
 const serviceAccountBase64 = process.env.FIREBASE_CONFIG_BASE64;
 const serviceAccount = JSON.parse(
   Buffer.from(serviceAccountBase64, 'base64').toString('utf8')
