@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="form.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+
+  <form class="form-1" id="userForm">
+
+    <div>
+      <h1 class="title">Information</h1>
+
+      <div class="customer-name">
+        <h3>Customer Name</h3>
+        <input type="text" id="customerName" class="text-number" name="customerName">
+      </div>
+
+      <div class="Tin-Number">
+        <h3>Tin Number</h3>
+        <input type="number" id="tinNumber" class="text-number" name="tinNumber">
+      </div>
+
+      <div class="Full-Half-Payment">
+        <h3 style="display: inline-block;">Full Payment</h3>
+        <input type="checkbox" id="fullPayment" class="checkbox" name="fullPayment">
+      </div>
+
+      <!-- Product 1 -->
+      <div class="product">
+        <div class="Qabd">
+          <img src="../products/coffe-table-1.jpg" alt="">
+          <h3>Qabd</h3>
+          <input type="number" id="product1Qty" class="text-number" name="product1Qty">
+        </div>
+        
+        <div class="amt">
+          <h3>Ammount In Birr</h3>
+          <input type="number" id="product1Amt" class="text-number" name="product1Amt">
+        </div>
+      </div>
+
+      <!-- Product 2 -->
+      <div class="product">
+        <div class="Qabd">
+          <img src="../products/dining-table.jpg" alt="">
+          <h3>Qabd</h3>
+          <input type="number" id="product2Qty" class="text-number" name="product2Qty">
+        </div>
+        
+        <div class="amt">
+          <h3>Ammount In Birr</h3>
+          <input type="number" id="product2Amt" class="text-number" name="product2Amt">
+        </div>
+      </div>
+
+      <h3>Total Ammount: <span id="totalDisplay">55,000</span> Birr</h3>
+    </div>
+
+    <div>
+      <div class="Cash-Mobile">
+        <h3 style="display: inline-block;">Mobile bank</h3>
+        <input type="checkbox" id="mobileBank" class="checkbox" name="mobileBank">
+      </div>
+
+      <div class="full-set">
+        <h3 style="display: inline-block;">Full Set</h3>
+        <input type="checkbox" id="fullSet" class="checkbox" name="fullSet">
+      </div>
+
+      <div class="Payment-screenshot">
+        <h3>Payment Screenshot ID</h3>
+        <input type="text" id="screenshotId" class="text-number" name="screenshotId">
+      </div>
+
+      <div class="bot-code">
+        <h3>Bot Code</h3>
+        <input type="number" id="botCode" class="text-number" name="botCode">
+        <button type="button" id="sendCode" class="action-btn"><i class="fa-brands fa-telegram"></i>Send Code</button>
+        <button type="submit" class="submit-btn">Log In</button>
+      </div>
+    </div>
+
+  </form>
+
+</body>
+</html>

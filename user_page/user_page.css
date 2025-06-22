@@ -1,0 +1,28 @@
+.users{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 95%;
+    margin-top: 10px;
+}
+.user{
+    border: black solid 2px;
+    padding: 20px;
+    margin-left: 30px;
+    border-radius: 5px;
+    height: 160px;
+    margin-top: 30px;
+}
+.user h1{
+    font-size: 23px;
+}
+.user h2{
+    font-size: 18px;
+    color: #d91717;
+}
+.user:hover{
+    background-color: rgb(222, 221, 221);
+    cursor: pointer;
+}
+.fa-plus{
+    font-size: 50px;
+}

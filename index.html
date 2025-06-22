@@ -1,38 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BYD Furniture</title>
-    <link rel="stylesheet" href="verification_page.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
-    <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BYD Furniture - Verification</title>
+  <link rel="stylesheet" href="common/header.css">
+  <link rel="stylesheet" href="verification_page.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-    <div class="header">
-        <div class=""></div>
-        <img src="byd_logo.png" class="logo">
-        <div class=""></div>
-    </div>
+  <header class="header">
+    <div></div>
+    <img src="byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
 
-    <div class="form">
+  <main class="form-container">
+    <form class="form" autocomplete="off">
 
+      <div class="input-group">
+        <label for="bot-code" class="input-label">
+          <i class="fa-solid fa-robot i"></i> Bot Code
+        </label>
+        <input type="password" id="bot-code" placeholder="Enter Bot Code" class="input-field" />
+        <button type="button" class="action-btn"><i class="fa-brands fa-telegram"></i>Send Code</button>
+      </div>
 
-        <div class="bot_code">
-            <input type="password" placeholder="Bot Code" class="bot_code code">
-            <button class="bot_btn">Send Code</button>
-        </div>
+      <div class="input-group">
+        <label for="bot-code" class="input-label">
+            <i class="fa-solid fa-code-commit i"></i> Verification Code
+        </label>
+        <input type="password" id="verification-code" placeholder="Enter Code" class="input-field" />
+      </div>
 
+      <div class="submit-group">
+        <button type="submit" class="submit-btn">Log In</button>
+      </div>
 
-        <div class="s_code">
-            <input type="password" placeholder="Code" class="special_code code">
-        </div>
+    </form>
+  </main>
 
-        <div class="btn"><button class="bot_btn">Log In</button></div>
+<!-- Place at the end of body -->
+<script>
+  document.querySelector(".form").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-    </div>
+    const botCode = document.getElementById("bot-code").value.trim();
+    const verificationCode = document.getElementById("verification-code").value.trim();
 
+    if (!botCode || !verificationCode) {
+      alert("Please enter both bot and verification code.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3000/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botCode, verificationCode })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // ✅ Redirect to your page
+        window.location.href = "user_page/user_page.html"; // <-- change to your desired page
+      } else {
+        alert("❌ Invalid verification code.");
+      }
+
+    } catch (err) {
+      console.error("⚠️ Error verifying code:", err);
+      alert("An error occurred while verifying the code.");
+    }
+  });
+  document.querySelector(".action-btn").addEventListener("click", async () => {
+    const botCode = document.getElementById("bot-code").value.trim();
+
+    if (!botCode) {
+      alert("Please enter the bot code.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3000/send-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ botCode })
+      });
+
+      const data = await res.json();
+      console.log("🔁 Response from /send-code:", data);
+
+      if (data.success) {
+        alert("✅ Verification codes sent to admins.");
+      } else {
+        alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("⚠️ Error sending code:", err);
+      alert("An error occurred while sending the code.");
+    }
+  });
+</script>
 
 </body>
 </html>

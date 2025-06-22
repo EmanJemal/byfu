@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Page</title>
+  <link rel="stylesheet" href="../common/header.css" />
+  <link rel="stylesheet" href="product.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+
+  <div class="products"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+      storageBucket: "byd-furniture-36585.firebasestorage.app",
+      messagingSenderId: "133527815399",
+      appId: "1:133527815399:web:8ef671206d0478824ece42",
+      measurementId: "G-FLTWX2E8WX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    window.onload = function () {
+      const container = document.querySelector(".products");
+      db.ref("products").once("value", (snapshot) => {
+        const products = snapshot.val();
+        if (!products) return container.innerHTML = "<p>No products found.</p>";
+
+        Object.entries(products).forEach(([key, p]) => {
+          const div = document.createElement("div");
+          div.className = "product";
+
+          const image = p.image?.startsWith("AgA")
+          ? `http://localhost:3000/telegram-image/${p.image}`
+          : (p.image?.startsWith("http") ? p.image : "../products/placeholder.jpg");
+
+          div.innerHTML = `
+            <img src="${image}" alt="${p.name}" />
+            <h1>${p.name || 'No Name'}</h1>
+            <div class="choices">
+              <div class="choice store" data-choice="store" data-id="${key}">
+                <h2>Store</h2>
+                <h2>${p.amount_store || 0} Pcs</h2>
+              </div>
+              <div class="choice suq" data-choice="suq" data-id="${key}">
+                <h2>Suq</h2>
+                <h2>${p.amount_suq || 0} Pcs</h2>
+              </div>
+            </div>
+          `;
+
+          // Allow multi-selection: just toggle
+          div.querySelectorAll('.choice').forEach(choiceBtn => {
+            choiceBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              div.classList.add("product-clicked");
+              choiceBtn.classList.toggle('selected');
+            });
+          });
+
+          container.appendChild(div);
+        });
+      });
+    };
+  </script>
+
+</body>
+</html>
