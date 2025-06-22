@@ -1,8 +1,7 @@
 require('dotenv').config();
 
 const TelegramBot = require('node-telegram-bot-api');
-const admin = require('firebase-admin');
-const serviceAccount = require(process.env.FIREBASE_KEY_PATH);
+//const serviceAccount = require(process.env.FIREBASE_KEY_PATH);
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -73,6 +72,14 @@ app.listen(PORT, () => {
   console.log(`Telegram image server listening on http://localhost:${PORT}`);
 });
 
+
+
+const admin = require('firebase-admin');
+
+const serviceAccountBase64 = process.env.FIREBASE_CONFIG_BASE64;
+const serviceAccount = JSON.parse(
+  Buffer.from(serviceAccountBase64, 'base64').toString('utf8')
+);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
