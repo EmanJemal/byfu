@@ -46,9 +46,6 @@ app.post('/verify-code', async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`🚀 Express server running on http://localhost:${PORT}`);
-});
 
 const token = process.env.TOKEN;
 const bot = new TelegramBot(token, { polling: true });
@@ -69,8 +66,9 @@ app.get('/telegram-image/:fileId', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Telegram image server listening on http://localhost:${PORT}`);
+  console.log(`🚀 Express server and Telegram image proxy listening on http://localhost:${PORT}`);
 });
+
 
 
 
