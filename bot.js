@@ -237,7 +237,7 @@ bot.on('message', async (msg) => {
 
     // Send photo + caption
     bot.sendPhoto(process.env.ADMIN_CHAT_ID, state.data.image, {
-      caption: adminText,
+      caption: adminMessage,
       reply_markup: {
           inline_keyboard: [[
             {
