@@ -22,15 +22,15 @@
 
       <div class="input-group">
         <label for="bot-code" class="input-label">
-          <i class="fa-solid fa-robot i"></i> Bot Code
+          <i class="fa-solid fa-robot i"></i> Bot Code.
         </label>
         <input type="password" id="bot-code" placeholder="Enter Bot Code" class="input-field" />
         <button type="button" class="action-btn"><i class="fa-brands fa-telegram"></i>Send Code</button>
       </div>
 
       <div class="input-group">
-        <label for="bot-code" class="input-label">
-            <i class="fa-solid fa-code-commit i"></i> Verification Code
+        <label for="verification-code" class="input-label">
+          <i class="fa-solid fa-code-commit i"></i> Verification Code
         </label>
         <input type="password" id="verification-code" placeholder="Enter Code" class="input-field" />
       </div>
@@ -42,72 +42,73 @@
     </form>
   </main>
 
-<!-- Place at the end of body -->
-<script>
-  document.querySelector(".form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  <script>
+    // Backend base URL (production)
+    const BACKEND_URL = "https://byfu-production.up.railway.app";
 
-    const botCode = document.getElementById("bot-code").value.trim();
-    const verificationCode = document.getElementById("verification-code").value.trim();
+    // 🔐 Handle login (code verification)
+    document.querySelector(".form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    if (!botCode || !verificationCode) {
-      alert("Please enter both bot and verification code.");
-      return;
-    }
+      const botCode = document.getElementById("bot-code").value.trim();
+      const verificationCode = document.getElementById("verification-code").value.trim();
 
-    try {
-      const res = await fetch("https://byfu-production.up.railway.app/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ botCode, verificationCode })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        // ✅ Redirect to your page
-        window.location.href = "user_page/user_page.html";
-      } else {
-        alert("❌ Invalid verification code.");
+      if (!botCode || !verificationCode) {
+        alert("Please enter both bot and verification code.");
+        return;
       }
 
-    } catch (err) {
-      console.error("⚠️ Error verifying code:", err);
-      alert("An error occurred while verifying the code.");
-    }
-  });
-  document.querySelector(".action-btn").addEventListener("click", async () => {
-  const botCode = document.getElementById("bot-code").value.trim();
+      try {
+        const res = await fetch(`${BACKEND_URL}/verify-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ botCode, verificationCode })
+        });
 
-  if (!botCode) {
-    alert("Please enter the bot code.");
-    return;
-  }
+        const data = await res.json();
 
-  try {
-    const res = await fetch("https://byfu-production.up.railway.app/send-code", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ botCode })
+        if (data.success) {
+          window.location.href = "user_page/user_page.html"; // ✅ Success redirect
+        } else {
+          alert("❌ Invalid verification code.");
+        }
+
+      } catch (err) {
+        console.error("⚠️ Error verifying code:", err);
+        alert("An error occurred while verifying the code.");
+      }
     });
 
-    const data = await res.json();
-    console.log("🔁 Response from /send-code:", data);
+    // 📩 Handle send code button
+    document.querySelector(".action-btn").addEventListener("click", async () => {
+      const botCode = document.getElementById("bot-code").value.trim();
 
-    if (data.success) {
-      alert("✅ Verification codes sent to admins.");
-    } else {
-      alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
-    }
-  } catch (err) {
-    console.error("⚠️ Error sending code:", err); // ✅ only log err here
-    alert("An error occurred while sending the code.");
-  }
-});
+      if (!botCode) {
+        alert("Please enter the bot code.");
+        return;
+      }
 
-</script>
+      try {
+        const res = await fetch(`${BACKEND_URL}/send-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ botCode })
+        });
+
+        const data = await res.json();
+        console.log("🔁 Response from /send-code:", data);
+
+        if (data.success) {
+          alert("✅ Verification codes sent to admins.");
+        } else {
+          alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("⚠️ Error sending code:", err);
+        alert("An error occurred while sending the code.");
+      }
+    });
+  </script>
 
 </body>
 </html>
