@@ -18,11 +18,26 @@ const adminChats = [
 ];
 
 // ─── CORS Setup ────────────────────────────────────────────────
+const allowedOrigins = [
+  'https://bbnntz.vercel.app',
+  'http://127.0.0.1:5500',  // ✅ Allow local testing
+  'http://localhost:5500'   // ✅ Also good to include this variant
+];
+
 app.use(cors({
-  origin: 'https://bbnntz.vercel.app', // allow Vercel frontend
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like curl or mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: false
 }));
+
 
 app.use(bodyParser.json());
 
@@ -111,13 +126,20 @@ app.get('/telegram-image/:fileId', async (req, res) => {
 
   try {
     const file = await bot.getFile(fileId);
+    if (!file || !file.file_path) {
+      console.error("⚠️ No file path received from Telegram");
+      return res.status(404).send('Image not found (no file_path)');
+    }
+
     const fileUrl = `https://api.telegram.org/file/bot${TOKEN}/${file.file_path}`;
     return res.redirect(fileUrl);
+
   } catch (err) {
     console.error("❌ Failed to get Telegram file:", err);
     return res.status(404).send('Image not found');
   }
 });
+
 
 // ─── Start Server ──────────────────────────────────────────────
 app.listen(PORT, () => {
@@ -430,7 +452,7 @@ function sendEditMenu(chatId, product) {
   
       bot.answerCallbackQuery(callbackQuery.id);
       sendEditMenu(chatId, foundProduct);
-      return bot.sendPhoto(chatId, foundProduct.nodimage, { caption: `7) 🖼️ Current Image` });
+      return bot.sendPhoto(chatId, foundProduct.image, { caption: `7) 🖼️ Current Image` });
     }
   });
   
