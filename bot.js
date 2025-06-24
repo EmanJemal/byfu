@@ -1,61 +1,111 @@
 require('dotenv').config();
 
-const TelegramBot = require('node-telegram-bot-api');
-//const serviceAccount = require(process.env.FIREBASE_KEY_PATH);
-
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // allow web page to connect
+const TelegramBot = require('node-telegram-bot-api');
+const admin = require('firebase-admin');
+
+// ─── Config & Setup ─────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3000;
 const TOKEN = process.env.TOKEN;
 
-// Middleware
-app.use(cors({
-  origin: 'https://bbnntz.vercel.app',
-  methods: ['GET', 'POST'],
-  credentials: false
-}));
-app.use(bodyParser.json());
-
-// Get admin IDs from .env
 const adminChats = [
   { id: process.env.ADMIN_1_CHAT_ID, code: '' },
   { id: process.env.ADMIN_2_CHAT_ID, code: '' },
   { id: process.env.ADMIN_3_CHAT_ID, code: '' }
 ];
 
-// Endpoint to receive botCode from frontend and send unique codes to admins
-app.post('/verify-code', async (req, res) => {
-  const { botCode, verificationCode } = req.body;
+// ─── CORS Setup ────────────────────────────────────────────────
+app.use(cors({
+  origin: 'https://bbnntz.vercel.app', // allow Vercel frontend
+  methods: ['GET', 'POST'],
+  credentials: false
+}));
+
+app.use(bodyParser.json());
+
+// ─── Firebase Setup ────────────────────────────────────────────
+try {
+  const base64 = process.env.FIREBASE_CONFIG_BASE64;
+  const jsonStr = Buffer.from(base64, 'base64').toString('utf8');
+  const serviceAccount = JSON.parse(jsonStr);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://byd-furniture-36585-default-rtdb.firebaseio.com'
+  });
+
+  console.log("✅ Firebase initialized");
+} catch (err) {
+  console.error("❌ Firebase config error:", err.message);
+  process.exit(1);
+}
+
+const db = admin.database();
+
+// ─── Telegram Bot Setup ────────────────────────────────────────
+const bot = new TelegramBot(TOKEN, { polling: true });
+
+// ─── Send Code Endpoint ────────────────────────────────────────
+app.post('/send-code', async (req, res) => {
+  const { botCode } = req.body;
+  console.log("📩 Received /send-code request for botCode:", botCode);
+
+  if (!botCode) {
+    return res.status(400).json({ success: false, error: 'Bot code missing.' });
+  }
 
   try {
-    const snapshot = await db.ref('verification_codes/' + botCode).once('value');
+    for (let admin of adminChats) {
+      admin.code = Math.floor(100000 + Math.random() * 900000).toString();
+      console.log(`📨 Sending code ${admin.code} to admin ${admin.id}`);
+      await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
+    }
+
+    await db.ref(`verification_codes/${botCode}`).set({
+      codes: adminChats.map(a => a.code),
+      sentAt: Date.now()
+    });
+
+    console.log("✅ Codes stored in DB and sent to admins.");
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Error in /send-code:", err);
+    res.status(500).json({ success: false, error: 'Failed to send messages.' });
+  }
+});
+
+// ─── Verify Code Endpoint ──────────────────────────────────────
+app.post('/verify-code', async (req, res) => {
+  const { botCode, verificationCode } = req.body;
+  console.log("🔍 Verifying code for botCode:", botCode);
+
+  if (!botCode || !verificationCode) {
+    return res.status(400).json({ success: false, message: 'Missing botCode or verificationCode.' });
+  }
+
+  try {
+    const snapshot = await db.ref(`verification_codes/${botCode}`).once('value');
     const data = snapshot.val();
 
     if (!data || !data.codes) {
       return res.json({ success: false, message: 'No codes found for this bot code' });
     }
 
-    if (data.codes.includes(verificationCode)) {
-      return res.json({ success: true });
-    }
-
-    res.json({ success: false, message: 'Invalid verification code' });
+    const isValid = data.codes.includes(verificationCode);
+    console.log(`🔐 Code verification result: ${isValid}`);
+    res.json({ success: isValid });
 
   } catch (err) {
-    console.error('Verification error:', err);
+    console.error('❌ Error in /verify-code:', err);
     res.status(500).json({ success: false });
   }
 });
 
-
-
-const token = process.env.TOKEN;
-const bot = new TelegramBot(token, { polling: true });
-
-
-
+// ─── Telegram Image Proxy Endpoint ─────────────────────────────
 app.get('/telegram-image/:fileId', async (req, res) => {
   const fileId = req.params.fileId;
 
@@ -64,76 +114,15 @@ app.get('/telegram-image/:fileId', async (req, res) => {
     const fileUrl = `https://api.telegram.org/file/bot${TOKEN}/${file.file_path}`;
     return res.redirect(fileUrl);
   } catch (err) {
-    console.error("Failed to get Telegram file:", err);
+    console.error("❌ Failed to get Telegram file:", err);
     return res.status(404).send('Image not found');
   }
 });
 
+// ─── Start Server ──────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Express server and Telegram image proxy listening on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
-
-
-
-const admin = require('firebase-admin');
-
-const base64 = process.env.FIREBASE_CONFIG_BASE64;
-const jsonStr = Buffer.from(base64, 'base64').toString('utf8');
-console.log(jsonStr); // Make sure this prints full JSON with no truncation
-
-try {
-  const parsed = JSON.parse(jsonStr);
-  console.log('JSON parsed successfully!');
-} catch (e) {
-  console.error('JSON parsing error:', e);
-}
- // just exit after test
-
-
-const serviceAccountBase64 = process.env.FIREBASE_CONFIG_BASE64;
-const serviceAccount = JSON.parse(
-  Buffer.from(serviceAccountBase64, 'base64').toString('utf8')
-);
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://byd-furniture-36585-default-rtdb.firebaseio.com'
-});
-
-const db = admin.database();
-
-// Add this route to handle sending the codes
-app.post('/send-code', async (req, res) => {
-  const { botCode } = req.body;
-  console.log("📩 Received send-code request:", botCode);
-
-  if (!botCode) {
-    console.log("❌ Bot code missing");
-    return res.status(400).json({ success: false, error: 'Bot code missing.' });
-  }
-
-  try {
-    for (let admin of adminChats) {
-      admin.code = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log(`📨 Sending to admin ${admin.id}: ${admin.code}`);
-
-      await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
-    }
-
-    await db.ref('verification_codes/' + botCode).set({
-      codes: adminChats.map(a => a.code),
-      sentAt: Date.now()
-    });
-
-    console.log("✅ Codes saved and sent.");
-    res.json({ success: true });
-  } catch (err) {
-    console.error('❌ Error sending codes:', err);
-    res.status(500).json({ success: false, error: 'Failed to send messages.' });
-  }
-});
-
 
 
 
