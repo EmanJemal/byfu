@@ -56,11 +56,13 @@
     }
 
     try {
-  const res = await fetch("https://byfu-production.up.railway.app/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ botCode, verificationCode })
-  });
+      const res = await fetch("https://byfu-production.up.railway.app/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botCode, verificationCode })
+      });
+
+
 
   if (!res.ok) {
     const errorText = await res.text(); // even if not JSON, log the raw response
@@ -90,7 +92,7 @@
     }
 
     try {
-      const res = await fetch("http://localhost:3000/send-code", {
+      const res = await fetch("http://localhost:8080/send-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

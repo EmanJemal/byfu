@@ -5,12 +5,12 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // allow web page to connect
 const app = express();
 const PORT = process.env.PORT || 3000;
 const TOKEN = process.env.TOKEN;
 
 // Middleware
-const cors = require("cors");
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -24,26 +24,22 @@ const adminChats = [
 // Endpoint to receive botCode from frontend and send unique codes to admins
 app.post('/verify-code', async (req, res) => {
   const { botCode, verificationCode } = req.body;
+  console.log("🛂 Verifying code for:", botCode, verificationCode);
 
-  try {
-    const snapshot = await db.ref('verification_codes/' + botCode).once('value');
-    const data = snapshot.val();
+  const snap = await db.ref('verification_codes/' + botCode).once('value');
+  const data = snap.val();
 
-    if (!data || !data.codes) {
-      return res.json({ success: false, message: 'No codes found for this bot code' });
-    }
+  if (!data || !data.codes) {
+    return res.status(404).json({ success: false, error: 'No codes found for this bot code.' });
+  }
 
-    if (data.codes.includes(verificationCode)) {
-      return res.json({ success: true });
-    }
-
-    res.json({ success: false, message: 'Invalid verification code' });
-
-  } catch (err) {
-    console.error('Verification error:', err);
-    res.status(500).json({ success: false });
+  if (data.codes.includes(verificationCode)) {
+    return res.json({ success: true });
+  } else {
+    return res.json({ success: false });
   }
 });
+
 
 
 
