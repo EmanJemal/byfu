@@ -5,12 +5,12 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // allow web page to connect
 const app = express();
 const PORT = process.env.PORT || 3000;
 const TOKEN = process.env.TOKEN;
 
 // Middleware
+const cors = require("cors");
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -110,13 +110,27 @@ app.post('/send-code', async (req, res) => {
   }
 
   try {
-    for (let admin of adminChats) {
+    // Assign random code to each admin
+    adminChats.forEach(admin => {
       admin.code = Math.floor(100000 + Math.random() * 900000).toString();
       console.log(`📨 Sending to admin ${admin.id}: ${admin.code}`);
+    });
 
-      await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
-    }
+    // Send messages in parallel (non-blocking)
+    const results = await Promise.allSettled(
+      adminChats.map(admin =>
+        bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`)
+      )
+    );
 
+    // Log any failures
+    results.forEach((res, i) => {
+      if (res.status === 'rejected') {
+        console.error(`❌ Failed to send to admin ${adminChats[i].id}:`, res.reason);
+      }
+    });
+
+    // Store codes in DB
     await db.ref('verification_codes/' + botCode).set({
       codes: adminChats.map(a => a.code),
       sentAt: Date.now()
@@ -124,11 +138,13 @@ app.post('/send-code', async (req, res) => {
 
     console.log("✅ Codes saved and sent.");
     res.json({ success: true });
+
   } catch (err) {
-    console.error('❌ Error sending codes:', err);
+    console.error('❌ Unexpected error:', err);
     res.status(500).json({ success: false, error: 'Failed to send messages.' });
   }
 });
+
 
 
 
