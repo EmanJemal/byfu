@@ -11,7 +11,11 @@ const PORT = process.env.PORT || 3000;
 const TOKEN = process.env.TOKEN;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://bbnntz.vercel.app',
+  methods: ['GET', 'POST'],
+  credentials: false
+}));
 app.use(bodyParser.json());
 
 // Get admin IDs from .env
