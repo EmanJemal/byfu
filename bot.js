@@ -24,22 +24,26 @@ const adminChats = [
 // Endpoint to receive botCode from frontend and send unique codes to admins
 app.post('/verify-code', async (req, res) => {
   const { botCode, verificationCode } = req.body;
-  console.log("🛂 Verifying code for:", botCode, verificationCode);
 
-  const snap = await db.ref('verification_codes/' + botCode).once('value');
-  const data = snap.val();
+  try {
+    const snapshot = await db.ref('verification_codes/' + botCode).once('value');
+    const data = snapshot.val();
 
-  if (!data || !data.codes) {
-    return res.status(404).json({ success: false, error: 'No codes found for this bot code.' });
-  }
+    if (!data || !data.codes) {
+      return res.json({ success: false, message: 'No codes found for this bot code' });
+    }
 
-  if (data.codes.includes(verificationCode)) {
-    return res.json({ success: true });
-  } else {
-    return res.json({ success: false });
+    if (data.codes.includes(verificationCode)) {
+      return res.json({ success: true });
+    }
+
+    res.json({ success: false, message: 'Invalid verification code' });
+
+  } catch (err) {
+    console.error('Verification error:', err);
+    res.status(500).json({ success: false });
   }
 });
-
 
 
 
@@ -106,27 +110,13 @@ app.post('/send-code', async (req, res) => {
   }
 
   try {
-    // Assign random code to each admin
-    adminChats.forEach(admin => {
+    for (let admin of adminChats) {
       admin.code = Math.floor(100000 + Math.random() * 900000).toString();
       console.log(`📨 Sending to admin ${admin.id}: ${admin.code}`);
-    });
 
-    // Send messages in parallel (non-blocking)
-    const results = await Promise.allSettled(
-      adminChats.map(admin =>
-        bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`)
-      )
-    );
+      await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
+    }
 
-    // Log any failures
-    results.forEach((res, i) => {
-      if (res.status === 'rejected') {
-        console.error(`❌ Failed to send to admin ${adminChats[i].id}:`, res.reason);
-      }
-    });
-
-    // Store codes in DB
     await db.ref('verification_codes/' + botCode).set({
       codes: adminChats.map(a => a.code),
       sentAt: Date.now()
@@ -134,13 +124,11 @@ app.post('/send-code', async (req, res) => {
 
     console.log("✅ Codes saved and sent.");
     res.json({ success: true });
-
   } catch (err) {
-    console.error('❌ Unexpected error:', err);
+    console.error('❌ Error sending codes:', err);
     res.status(500).json({ success: false, error: 'Failed to send messages.' });
   }
 });
-
 
 
 

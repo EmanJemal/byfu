@@ -56,32 +56,25 @@
     }
 
     try {
-      const res = await fetch("https://byfu-production.up.railway.app/verify-code", {
+      const res = await fetch("https://byfu-production.up.railway.app/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ botCode, verificationCode })
       });
 
+      const data = await res.json();
 
+      if (data.success) {
+        // ✅ Redirect to your page
+        window.location.href = "user_page/user_page.html";
+      } else {
+        alert("❌ Invalid verification code.");
+      }
 
-  if (!res.ok) {
-    const errorText = await res.text(); // even if not JSON, log the raw response
-    throw new Error(`Server responded with ${res.status}: ${errorText}`);
-  }
-
-  const data = await res.json();
-
-  if (data.success) {
-    window.location.href = "user_page/user_page.html";
-  } else {
-    alert("❌ Invalid verification code.");
-  }
-
-} catch (err) {
-  console.error("⚠️ Detailed error:", err);
-  alert("An error occurred while verifying the code.");
-}
-
+    } catch (err) {
+      console.error("⚠️ Error verifying code:", err);
+      alert("An error occurred while verifying the code.");
+    }
   });
   document.querySelector(".action-btn").addEventListener("click", async () => {
     const botCode = document.getElementById("bot-code").value.trim();
@@ -92,7 +85,7 @@
     }
 
     try {
-      const res = await fetch("http://localhost:8080/send-code", {
+      const res = await fetch("http://localhost:3000/send-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
