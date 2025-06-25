@@ -19,9 +19,12 @@ const adminChats = [
 
 // ─── CORS Setup ────────────────────────────────────────────────
 const allowedOrigins = [
-  'https://byd-kappa.vercel.app/',
-  'http://127.0.0.1:5500',  // ✅ Allow local testing
-  'http://localhost:5500'   // ✅ Also good to include this variant
+  'https://bbnntz.vercel.app',
+  'https://byd-kappa.vercel.app', // ✅ Add this line
+  'http://127.0.0.1:5500',
+  'http://localhost:5500',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
 ];
 
 app.use(cors({
