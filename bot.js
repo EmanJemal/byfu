@@ -19,7 +19,6 @@ const adminChats = [
 
 // ─── CORS Setup ────────────────────────────────────────────────
 const allowedOrigins = [
-  'https://bbnntz.vercel.app',
   'https://byd-kappa.vercel.app', // ✅ Add this line
   'http://127.0.0.1:5500',
   'http://localhost:5500',
@@ -203,10 +202,25 @@ app.listen(PORT, () => {
 
 console.log('✅ Bot is up and running...');
 
-// /start command
+  // ✅ Convert string IDs from .env to numbers
+  const allowedUsers = [
+    parseInt(process.env.ADMIN_CHAT_ID),
+    parseInt(process.env.ADMIN_1_CHAT_ID),
+    parseInt(process.env.ADMIN_2_CHAT_ID),
+    parseInt(process.env.ADMIN_3_CHAT_ID),
+    parseInt(process.env.Abdela)
+  ];
+
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const firstName = msg.from.first_name || 'there';
+
+
+  // ✅ Check if user is allowed
+  if (!allowedUsers.includes(chatId)) {
+    console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+    return; // Stop here — do not respond
+  }
 
   // ✅ Save to Realtime Database
   await db.ref('users/' + chatId).set({
@@ -215,16 +229,21 @@ bot.onText(/\/start/, async (msg) => {
     joinedAt: Date.now()
   });
 
+  // ✅ Send welcome message
   bot.sendMessage(chatId, `👋 Hello ${firstName}!\nYou're now connected to the bot.`);
 });
-
-
-
 
 const userStates = {};
 
 bot.onText(/\/store/, (msg) => {
   const chatId = msg.chat.id;
+
+  // ✅ Check if user is allowed
+  if (!allowedUsers.includes(chatId)) {
+    console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+    return; // Stop here — do not respond
+  }
+
   userStates[chatId] = { step: 'awaiting_image', data: {} };
   bot.sendMessage(chatId, '📸 Photo ላክ');
 });
@@ -236,10 +255,14 @@ const screenshotSessions = {};
 bot.onText(/\/screenshot/, async (msg) => {
   const chatId = msg.chat.id;
 
-  // Ask for 4-digit ID first
+    // ✅ Check if user is allowed
+    if (!allowedUsers.includes(chatId)) {
+      console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+      return; // Stop here — do not respond
+    }
+
   bot.sendMessage(chatId, `📷 Please send the 4-digit Screenshot ID:`);
 
-  // Set user session to wait for ID
   screenshotSessions[chatId] = { step: 'awaiting_id' };
 });
 
@@ -251,10 +274,30 @@ bot.on('message', async (msg) => {
   if (!session) return;
 
   // Step 1: Receive Screenshot ID
-  if (session.step === 'awaiting_id' && /^\d{4}$/.test(msg.text)) {
-    session.screenshotId = msg.text;
+  if (session.step === 'awaiting_id' && msg.text) {
+    const id = msg.text.trim();
+
+    // Validate format
+    if (!/^\d{4}$/.test(id)) {
+      return bot.sendMessage(chatId, `❌ Screenshot ID must be exactly 4 digits. Try again.`);
+    }
+
+    // Check if ID already exists in Firebase
+    const screenshotRef = db.ref(`Screenshot_id/${id}`);
+    const snapshot = await screenshotRef.once('value');
+
+    if (snapshot.exists()) {
+      // ID taken, ask for another
+      return bot.sendMessage(chatId, `❌ Screenshot ID *${id}* is already taken. Please send a different 4-digit ID:`, {
+        parse_mode: 'Markdown'
+      });
+    }
+
+    // ID free, save it in session and ask for photo
+    session.screenshotId = id;
     session.step = 'awaiting_photo';
-    return bot.sendMessage(chatId, `✅ Screenshot ID set to *${msg.text}*\n📤 Now send the screenshot photo:`, {
+
+    return bot.sendMessage(chatId, `✅ Screenshot ID set to *${id}*\n📤 Now send the screenshot photo:`, {
       parse_mode: 'Markdown'
     });
   }
@@ -289,9 +332,18 @@ bot.on('message', async (msg) => {
 
 
 
+
+// Message handler
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const state = userStates[chatId];
+
+  // ✅ Check if user is allowed
+  if (!allowedUsers.includes(chatId)) {
+    console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+    return; // Stop here — do not respond
+  }
+
 
   if (!state) return; // User not in /store flow
 
@@ -384,16 +436,30 @@ bot.on('message', async (msg) => {
   }
 });
 
+
 const editSessions = {};
+
 
 bot.onText(/\/edit/, (msg) => {
   const chatId = msg.chat.id;
+    // Check if user is admin, otherwise ignore
+  if (!allowedUsers.includes(chatId)) {
+    console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+    return; // Stop here — do not respond
+  }
+ 
   editSessions[chatId] = { step: 'awaiting_code', data: {}, key: null };
   bot.sendMessage(chatId, '🔎 product code አስገቡ.');
 });
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
+    // Check if user is admin, otherwise ignore
+    if (!admins.includes(chatId)) {
+      bot.sendMessage(chatId, "❌ You are not authorized to use this command.");
+     return; 
+   }
+ 
   const session = editSessions[chatId];
   if (!session) return;
 
@@ -527,15 +593,17 @@ function sendEditMenu(chatId, product) {
   }
 
   
-  bot.on('callback_query', async (callbackQuery) => {
+bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
   
     // Allow only admin to edit from button
     if (data.startsWith('admin_edit_')) {
-      if (chatId.toString() !== process.env.ADMIN_CHAT_ID) {
-        return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Only admin can use this.', show_alert: true });
+      if (!allowedUsers.includes(chatId)) {
+        console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+        return; // Stop here — do not respond
       }
+
   
       const productCode = data.replace('admin_edit_', '');
       const snapshot = await db.ref('products').once('value');
@@ -573,10 +641,11 @@ function sendEditMenu(chatId, product) {
   bot.onText(/\/list/, async (msg) => {
     const chatId = msg.chat.id;
   
-    // Only allow admin
-    if (chatId.toString() !== process.env.ADMIN_CHAT_ID) {
-      return bot.sendMessage(chatId, '❌ Only the admin can use this command.');
-    }
+      // ✅ Check if user is allowed
+      if (!allowedUsers.includes(chatId)) {
+        console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+        return; // Stop here — do not respond
+      }
   
     try {
       const snapshot = await db.ref('products').once('value');
