@@ -48,7 +48,7 @@
           div.className = "product";
 
           const image = p.image?.startsWith("AgA")
-          ? `http://localhost:3000/telegram-image/${p.image}`
+          ? `https://byfu-production-fe07.up.railway.app/telegram-image/${p.image}`
           : (p.image?.startsWith("http") ? p.image : "../products/placeholder.jpg");
 
           div.innerHTML = `

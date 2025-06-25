@@ -115,7 +115,7 @@
       db.ref(`products/${p.id}`).once('value').then(snapshot => {
         const productData = snapshot.val();
         const image = productData?.image?.startsWith("AgA")
-          ? `http://localhost:3000/telegram-image/${productData.image}`
+          ? `https://byfu-production-fe07.up.railway.app/telegram-image/${productData.image}`
           : (productData?.image?.startsWith("http")
               ? productData.image
               : "../products/placeholder.jpg");
