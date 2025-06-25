@@ -455,10 +455,10 @@ bot.onText(/\/edit/, (msg) => {
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
     // Check if user is admin, otherwise ignore
-    if (!admins.includes(chatId)) {
-      bot.sendMessage(chatId, "❌ You are not authorized to use this command.");
-     return; 
-   }
+    if (!allowedUsers.includes(chatId)) {
+      console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
+      return; // Stop here — do not respond
+    }
  
   const session = editSessions[chatId];
   if (!session) return;
