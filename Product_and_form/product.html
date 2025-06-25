@@ -18,7 +18,7 @@
   <header class="header">
     <div></div>
     <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
-    <div></div>
+    <div><button class="action-btn">Submit</button></div>
   </header>
 
   <div class="products"></div>
@@ -79,6 +79,29 @@
         });
       });
     };
+
+
+    document.querySelector('.action-btn').addEventListener('click', () => {
+  const selectedProducts = [];
+
+  document.querySelectorAll('.product').forEach(product => {
+    const selectedChoice = product.querySelector('.choice.selected');
+    if (selectedChoice) {
+      const id = selectedChoice.getAttribute('data-id');
+      const choice = selectedChoice.getAttribute('data-choice');
+      const name = product.querySelector('h1')?.textContent?.split('\n')[0] || '';
+      const code = product.querySelector('h1')?.textContent?.split('\n')[1] || '';
+      selectedProducts.push({ id, name, code, choice });
+    }
+  });
+
+  // Save to localStorage
+  localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+
+  // Redirect
+  window.location.href = '/Form/form.html';
+});
+
   </script>
 
 </body>

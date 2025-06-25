@@ -1,28 +1,51 @@
-.users{
+.users {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     width: 95%;
     margin-top: 10px;
-}
-.user{
+  }
+  .user {
     border: black solid 2px;
     padding: 20px;
     margin-left: 30px;
     border-radius: 5px;
     height: 160px;
     margin-top: 30px;
-}
-.user h1{
+  }
+  .user h1 {
     font-size: 23px;
-}
-.user h2{
+  }
+  .user h2 {
     font-size: 18px;
     color: #d91717;
-}
-.user:hover{
+  }
+  .user:hover {
     background-color: rgb(222, 221, 221);
     cursor: pointer;
-}
-.fa-plus{
+  }
+  .fa-plus {
     font-size: 50px;
+  }
+
+
+
+/*button*/
+.action-btn{
+  background-color: #d91717;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.3s ease;
+}
+.action-btn{
+  width: 50%;
+  margin-left: 80px;
+}
+
+.action-btn:hover{
+  background-color: #980e0e;
 }

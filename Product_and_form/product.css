@@ -70,3 +70,24 @@
     font-size: 1rem;
   }
   
+
+/*button*/
+.action-btn{
+  background-color: #d91717;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.3s ease;
+}
+.action-btn{
+  width: 50%;
+  margin-left: 80px;
+}
+
+.action-btn:hover{
+  background-color: #980e0e;
+}

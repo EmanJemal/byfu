@@ -60,6 +60,56 @@ try {
 
 const db = admin.database();
 
+const purchaseStartTime = Date.now();
+
+// ─── Listen for new purchases ─────────────────────────────────────────────
+db.ref('purchases').on('child_added', async (snapshot) => {
+  const purchase = snapshot.val();
+  const key = snapshot.key;
+
+  // Only handle purchases made after bot start time
+  if (!purchase || new Date(purchase.date).getTime() < purchaseStartTime) return;
+
+  const { customerName, date, screenshotIds = [], products = [] } = purchase;
+
+  for (let admin of adminChats) {
+    const chatId = admin.id;
+
+    for (let p of products) {
+      const productSnap = await db.ref(`products/${p.id}`).once('value');
+      const productData = productSnap.val();
+      const imageId = productData?.image;
+
+      let caption = `✅ ✅ ✅ ✅ ✅ \n🛒 *New Sale*\n👤 Customer: *${customerName}*\n📦 Product: *${p.name}* (${p.choice})\n🔢 Qty: *${p.qty}*\n💰 Price: *${p.price}* Birr`;
+      if (p.qabd) caption += `\n💵 Qabd: *${p.qabd}* Birr`;
+      caption += `\n📅 ${new Date(date).toLocaleString()}`;
+
+      if (imageId?.startsWith("AgA")) {
+        await bot.sendPhoto(chatId, imageId, { caption, parse_mode: "Markdown" });
+      } else {
+        await bot.sendMessage(chatId, caption, { parse_mode: "Markdown" });
+      }
+    }
+
+    // Send all screenshots
+    for (let ssId of screenshotIds) {
+      const ssSnap = await db.ref(`Screenshot_id/${ssId}`).once('value');
+      const ssData = ssSnap.val();
+      if (ssData?.image?.startsWith("AgA")) {
+        await bot.sendPhoto(chatId, ssData.image, {
+          caption: `🧾 Payment Screenshot (ID: ${ssId})\n👤 *${customerName}*\n📅 ${ssData.date || "Unknown"}`,
+          parse_mode: "Markdown"
+        });
+      }
+    }
+  }
+
+  console.log(`✅ Notified admins about new purchase: ${key}`);
+});
+
+
+
+
 // ─── Telegram Bot Setup ────────────────────────────────────────
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -175,6 +225,66 @@ bot.onText(/\/store/, (msg) => {
   userStates[chatId] = { step: 'awaiting_image', data: {} };
   bot.sendMessage(chatId, '📸 Photo ላክ');
 });
+
+
+const screenshotSessions = {};
+
+// Handle /screenshot command
+bot.onText(/\/screenshot/, async (msg) => {
+  const chatId = msg.chat.id;
+
+  // Ask for 4-digit ID first
+  bot.sendMessage(chatId, `📷 Please send the 4-digit Screenshot ID:`);
+
+  // Set user session to wait for ID
+  screenshotSessions[chatId] = { step: 'awaiting_id' };
+});
+
+// Handle responses
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const session = screenshotSessions[chatId];
+
+  if (!session) return;
+
+  // Step 1: Receive Screenshot ID
+  if (session.step === 'awaiting_id' && /^\d{4}$/.test(msg.text)) {
+    session.screenshotId = msg.text;
+    session.step = 'awaiting_photo';
+    return bot.sendMessage(chatId, `✅ Screenshot ID set to *${msg.text}*\n📤 Now send the screenshot photo:`, {
+      parse_mode: 'Markdown'
+    });
+  }
+
+  // Step 2: Receive Photo
+  if (session.step === 'awaiting_photo' && msg.photo) {
+    const file = msg.photo[msg.photo.length - 1]; // highest resolution
+    const fileId = file.file_id;
+
+    const screenshotRef = db.ref(`Screenshot_id/${session.screenshotId}`);
+    await screenshotRef.set({
+      date: new Date().toISOString(),
+      image: fileId
+    });
+
+    delete screenshotSessions[chatId]; // clear session
+
+    return bot.sendMessage(chatId, `✅ Screenshot saved successfully under ID *${session.screenshotId}*`, {
+      parse_mode: 'Markdown'
+    });
+  }
+
+  // Catch invalid responses
+  if (session.step === 'awaiting_id' && msg.text && !/^\d{4}$/.test(msg.text)) {
+    return bot.sendMessage(chatId, `❌ Screenshot ID must be exactly 4 digits. Try again.`);
+  }
+
+  if (session.step === 'awaiting_photo' && !msg.photo) {
+    return bot.sendMessage(chatId, `❌ Please send a valid photo.`);
+  }
+});
+
+
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
