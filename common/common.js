@@ -13,11 +13,8 @@ if (!sessionStart || now - parseInt(sessionStart) > FOUR_MINUTES) {
     window.location.href = "../index.html";
   }, FOUR_MINUTES - (now - parseInt(sessionStart)));
 }
-document.querySelectorAll(".action-btn").forEach(btn => {
-    if (btn.textContent.trim().toLowerCase() === "log out") {
-      btn.addEventListener("click", () => {
-        localStorage.removeItem("sessionStart");
-        window.location.href = "../index.html"; // adjust path if needed
-      });
-    }
+document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("sessionStart");  // 🧼 Clear the session
+    window.location.href = "../index.html";   // 🔁 Redirect to login
   });
+  
