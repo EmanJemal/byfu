@@ -42,8 +42,13 @@
     </form>
   </main>
 
-<!-- Place at the end of body -->
 <script>
+    const expectedKey = "8797254sa4d864fasdf1ads65f4652cas9+d7v41sad67vf48d5v6ss0d2v4as6d53v28d+f41sd984v56sd+v9+85sda-9dsv*/ds-";
+  const currentKey = localStorage.getItem("deviceKey");
+
+  if (currentKey !== expectedKey) {
+    document.body.innerHTML = "⛔ Unauthorized device. Access denied";
+  }
   document.querySelector(".form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
