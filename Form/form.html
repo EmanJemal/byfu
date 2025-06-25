@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="form.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <script src="../common/common.js"></script>
 </head>
 <body>
 
@@ -166,7 +167,7 @@
   
           if (data && data.image) {
             const image = data.image.startsWith("AgA")
-              ? `http://localhost:3000/telegram-image/${data.image}`
+              ? `https://byfu-production-fe07.up.railway.app/telegram-image/${data.image}`
               : "../products/placeholder.jpg";
             container.innerHTML = `
               <h4>ID: ${id}</h4>

@@ -66,6 +66,7 @@
 
       if (data.success) {
         // ✅ Redirect to your page
+        localStorage.setItem("sessionStart", Date.now());
         window.location.href = "user_page/user_page.html"; // <-- change to your desired page
       } else {
         alert("❌ Invalid verification code.");
@@ -79,8 +80,8 @@
   document.querySelector(".action-btn").addEventListener("click", async () => {
     const botCode = document.getElementById("bot-code").value.trim();
 
-    if (!botCode) {
-      alert("Please enter the bot code.");
+    if (!botCode || botCode !== "8756") {
+      alert("Please enter the bot code or Only authorized bot code is accepted.");
       return;
     }
 
