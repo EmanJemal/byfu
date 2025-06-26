@@ -528,19 +528,19 @@ bot.on('message', async (msg) => {
         ...session.data,
         updatedAt: Date.now()
       });
-
+    
       // Notify Admin
       const adminText = `
-✏️ Product Updated:
-
-1) ስም: ${session.data.name}
-2) የተገዛበት ዋጋ: ${session.data.cost || 'N/A'}
-3) የሚሸጥበት ዋጋ: ${session.data.selling || 'N/A'}
-4) Store ያለ ፈሬ: ${session.data.amount_store || 'N/A'}
-5) Suq ያለ ፈሬ: ${session.data.amount_suq || 'N/A'}
-👤 Edited by: @${msg.from.username || msg.from.first_name}
+    ✏️ Product Updated:
+    
+    1) ስም: ${session.data.name}
+    2) የተገዛበት ዋጋ: ${session.data.cost || 'N/A'}
+    3) የሚሸጥበት ዋጋ: ${session.data.selling || 'N/A'}
+    4) Store ያለ ፈሬ: ${session.data.amount_store || 'N/A'}
+    5) Suq ያለ ፈሬ: ${session.data.amount_suq || 'N/A'}
+    👤 Edited by: @${msg.from.username || msg.from.first_name}
       `.trim();
-
+    
       bot.sendPhoto(process.env.ADMIN_CHAT_ID, session.data.image, {
         caption: adminText,
         reply_markup: {
@@ -551,15 +551,18 @@ bot.on('message', async (msg) => {
             },
             {
               text: '🗑️ Add Product',
-              callback_data: `admin_add_product_${state.data.code}`
+              callback_data: `admin_add_product_${session.data.code}`
             }
           ]]
         }
       });
-            bot.sendMessage(chatId, '✅ Product updated and sent to admin.');
+    
+      // ✅ Notify editor
+      bot.sendMessage(chatId, '✅ You have successfully finished editing this product.');
       delete editSessions[chatId];
       return;
-    } else {
+    }
+     else {
       if (msg.text && msg.text.startsWith('/')) return; // user is running another command
       return bot.sendMessage(chatId, '❌ Invalid choice. Type a number from 1 to 7.');
     }
@@ -792,6 +795,34 @@ function sendEditMenu(chatId, product) {
     } catch (err) {
       console.error(err);
       bot.sendMessage(chatId, '❌ Failed to load product list.');
+    }
+  });
+  
+
+  bot.onText(/\/cancel/, (msg) => {
+    const chatId = msg.chat.id;
+  
+    let cancelled = false;
+  
+    if (userStates[chatId]) {
+      delete userStates[chatId];
+      cancelled = true;
+    }
+  
+    if (editSessions[chatId]) {
+      delete editSessions[chatId];
+      cancelled = true;
+    }
+  
+    if (addProductSessions[chatId]) {
+      delete addProductSessions[chatId];
+      cancelled = true;
+    }
+  
+    if (cancelled) {
+      bot.sendMessage(chatId, '❌ Operation cancelled.');
+    } else {
+      bot.sendMessage(chatId, 'ℹ️ No active operation to cancel.');
     }
   });
   
