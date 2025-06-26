@@ -326,6 +326,8 @@ bot.on('message', async (msg) => {
   }
 
   if (session.step === 'awaiting_photo' && !msg.photo) {
+    if (msg.text && msg.text.startsWith('/')) return; // user is running another command
+
     return bot.sendMessage(chatId, `❌ Please send a valid photo.`);
   }
 });
@@ -550,6 +552,7 @@ bot.on('message', async (msg) => {
       delete editSessions[chatId];
       return;
     } else {
+      if (msg.text && msg.text.startsWith('/')) return; // user is running another command
       return bot.sendMessage(chatId, '❌ Invalid choice. Type a number from 1 to 7.');
     }
   }

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add New Product</title>
+  <link rel="stylesheet" href="../common/header.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="new-product.css">
+  <script src="../common/common.js"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div>    <div><button class="action-btn-header"  id="logout-btn">Log Out</button></div>  </div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+
+  <form class="form-1" id="productForm">
+    <h1>🛒 አዲስ እቃ መመዝገቢያ</h1>
+
+    <h3>📝 ስም</h3>
+    <input type="text" id="productName" class="text-input" required />
+
+    <h3>🔢 Code</h3>
+    <input type="text" id="productCode" class="text-input" required />
+
+    <h3>💰 የተገዛበት እቃ (Purchase Price)</h3>
+    <input type="number" id="purchasePrice" class="text-input" required />
+
+    <h3>💵 የሚሸጥበት እቃ (Selling Price)</h3>
+    <input type="number" id="sellingPrice" class="text-input" required />
+
+    <h3>📦 Store ያለ ፍሬ</h3>
+    <input type="number" id="storeQty" class="text-input" required />
+
+    <h3>🏪 Suq ያለ ፍሬ</h3>
+    <input type="number" id="shopQty" class="text-input" required />
+
+    <h3>🖼️ Product Image ID</h3>
+    <input type="text" id="image-id" class="text-input" placeholder="Enter screenshot ID (e.g., 1234)" />
+
+    <div id="image-preview" style="margin-top: 10px;"></div>
+
+
+    <!-- Verification -->
+    <div class="input-group">
+      <label for="bot-code" class="input-label">
+        <i class="fa-solid fa-robot i"></i> Bot Code
+      </label>
+      <input type="password" id="bot-code" class="text-input" placeholder="Enter Bot Code" />
+      <button type="button" class="action-btn" id="send-code-btn"><i class="fa-brands fa-telegram"></i> Send Code</button>
+    </div>
+
+    <div class="input-group">
+      <label for="verification-code" class="input-label">Verification Code</label>
+      <input type="text" id="verification-code" class="text-input" placeholder="Enter verification code" />
+    </div>
+
+    <button type="submit" class="submit-btn">➕ Add Product</button>
+  </form>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+      storageBucket: "byd-furniture-36585.appspot.com",
+      messagingSenderId: "133527815399",
+      appId: "1:133527815399:web:8ef671206d0478824ece42"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const imageIdInput = document.getElementById("image-id");
+    const imagePreviewDiv = document.getElementById("image-preview");
+
+    imageIdInput.addEventListener("input", async () => {
+      const id = imageIdInput.value.trim();
+      imagePreviewDiv.innerHTML = '';
+
+      if (!id) return;
+
+      try {
+        const snap = await db.ref(`Screenshot_id/${id}`).once("value");
+        const data = snap.val();
+
+        if (data && data.image) {
+          const src = data.image.startsWith("AgA")
+            ? `https://byfu-production-fe07.up.railway.app/telegram-image/${data.image}`
+            : "../products/placeholder.jpg";
+
+          imagePreviewDiv.innerHTML = `
+            <h4>Preview for ID: ${id}</h4>
+            <img src="${src}" style="max-width: 300px; border-radius: 8px;">
+            <p><strong>Date:</strong> ${data.date || "N/A"}</p>
+          `;
+        } else {
+          imagePreviewDiv.innerHTML = `<p style='color:red'>❌ No image found for ID: ${id}</p>`;
+        }
+      } catch (err) {
+        imagePreviewDiv.innerHTML = `<p style='color:red'>⚠️ Error loading image.</p>`;
+        console.error(err);
+      }
+    });
+
+
+    const sendCodeBtn = document.getElementById('send-code-btn');
+
+    sendCodeBtn.addEventListener('click', async () => {
+      const botCode = document.getElementById("bot-code").value.trim();
+
+      if (!botCode || botCode !== "8756") {
+        alert("Please enter a valid bot code.");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://byfu-production-fe07.up.railway.app/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ botCode })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ Code sent to admins.");
+        } else {
+          alert("❌ Failed to send code.");
+        }
+      } catch (err) {
+        console.error("Error sending code:", err);
+        alert("An error occurred.");
+      }
+    });
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const botCode = document.getElementById("bot-code").value.trim();
+      const verificationCode = document.getElementById("verification-code").value.trim();
+
+      if (!botCode || !verificationCode) {
+        alert("Please enter both bot code and verification code.");
+        return;
+      }
+
+      // Check if already verified (optional cache)
+      const sessionOk = localStorage.getItem("verifiedBotCode") === botCode;
+      if (!sessionOk) {
+        const res = await fetch("https://byfu-production-fe07.up.railway.app/verify-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ botCode, verificationCode })
+        });
+
+        const result = await res.json();
+        if (!result.success) {
+          alert("❌ Invalid verification code.");
+          return;
+        }
+
+        localStorage.setItem("verifiedBotCode", botCode); // Cache verification
+      }
+
+      // Save product to Firebase
+      const name = document.getElementById('productName').value.trim();
+      const code = document.getElementById('productCode').value.trim();
+      const purchase = parseFloat(document.getElementById('purchasePrice').value.trim());
+      const selling = parseFloat(document.getElementById('sellingPrice').value.trim());
+      const storeQty = parseInt(document.getElementById('storeQty').value.trim());
+      const shopQty = parseInt(document.getElementById('shopQty').value.trim());
+      const imageId = imageIdInput.value.trim();
+
+      const product = {
+        name,
+        code,
+        selling: selling.toString(),
+        amount_store: storeQty.toString(),
+        amount_suq: shopQty.toString(),
+        createdAt: Date.now(),
+        createdBy: Date.now().toString().slice(-9), // random placeholder userID, replace if needed
+        image: imageId ? (await db.ref(`Screenshot_id/${imageId}`).once('value')).val()?.image || "" : ""
+      };
+        
+        
+      db.ref('products').push(product).then(() => {
+        alert("✅ Product added successfully!");
+        document.getElementById('productForm').reset();
+        localStorage.removeItem("verifiedBotCode");
+      }).catch(err => {
+        console.error("Error saving product:", err);
+        alert("❌ Failed to save product.");
+      });
+    });
+  </script>
+</body>
+</html>
