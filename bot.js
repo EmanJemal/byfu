@@ -425,6 +425,10 @@ bot.on('message', async (msg) => {
             {
               text: '✏️ Edit Product',
               callback_data: `admin_edit_${state.data.code}`
+            },
+            {
+              text: '🗑️ Add Product',
+              callback_data: `admin_add_product_${state.data.code}`
             }
           ]]
         }
@@ -544,6 +548,10 @@ bot.on('message', async (msg) => {
             {
               text: '✏️ Edit Product',
               callback_data: `admin_edit_${session.data.code}`
+            },
+            {
+              text: '🗑️ Add Product',
+              callback_data: `admin_add_product_${state.data.code}`
             }
           ]]
         }
@@ -596,17 +604,15 @@ function sendEditMenu(chatId, product) {
   }
 
   
-bot.on('callback_query', async (callbackQuery) => {
+  const addProductSessions = {}; // ✅ Declare once globally at the top of your file
+
+  bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
   
-    // Allow only admin to edit from button
+    // ✅ Admin Edit Product Button
     if (data.startsWith('admin_edit_')) {
-      if (!allowedUsers.includes(chatId)) {
-        console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
-        return; // Stop here — do not respond
-      }
-
+      if (!allowedUsers.includes(chatId)) return;
   
       const productCode = data.replace('admin_edit_', '');
       const snapshot = await db.ref('products').once('value');
@@ -626,7 +632,6 @@ bot.on('callback_query', async (callbackQuery) => {
         return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Product not found.', show_alert: true });
       }
   
-      // Start edit session for admin
       editSessions[chatId] = {
         key: foundKey,
         original: foundProduct,
@@ -638,7 +643,95 @@ bot.on('callback_query', async (callbackQuery) => {
       sendEditMenu(chatId, foundProduct);
       return bot.sendPhoto(chatId, foundProduct.image, { caption: `7) 🖼️ Current Image` });
     }
+  
+    // ✅ Admin Add Product Button
+    if (data.startsWith('admin_add_product_')) {
+      if (!allowedUsers.includes(chatId)) return;
+  
+      const productCode = data.replace('admin_add_product_', '');
+      const snapshot = await db.ref('products').once('value');
+      const products = snapshot.val();
+      let foundKey = null;
+      let foundProduct = null;
+  
+      for (let key in products) {
+        if (products[key].code === productCode) {
+          foundKey = key;
+          foundProduct = products[key];
+          break;
+        }
+      }
+  
+      if (!foundKey) {
+        return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Product not found.', show_alert: true });
+      }
+  
+      addProductSessions[chatId] = {
+        key: foundKey,
+        data: foundProduct,
+        step: 'choose_location'
+      };
+  
+      bot.answerCallbackQuery(callbackQuery.id);
+      return bot.sendMessage(chatId, `📍 Where did the new items go?`, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '🏪 Suq', callback_data: 'add_to_suq' },
+              { text: '📦 Store', callback_data: 'add_to_store' }
+            ]
+          ]
+        }
+      });
+    }
+  
+    // ✅ Handle Suq or Store choice
+    if (data === 'add_to_suq' || data === 'add_to_store') {
+      const session = addProductSessions[chatId];
+      if (!session) return;
+  
+      session.location = data === 'add_to_suq' ? 'suq' : 'store';
+      session.step = 'awaiting_amount';
+  
+      bot.answerCallbackQuery(callbackQuery.id);
+      return bot.sendMessage(chatId, `✍️ How many items were added to ${session.location === 'suq' ? '🏪 Suq' : '📦 Store'}?`);
+    }
   });
+
+  bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+  
+    // ✅ Handle Add Product amount entry
+    if (addProductSessions[chatId] && msg.text && !isNaN(msg.text)) {
+      const session = addProductSessions[chatId];
+      const amountToAdd = parseInt(msg.text);
+      const locationField = session.location === 'suq' ? 'amount_suq' : 'amount_store';
+      const current = parseInt(session.data[locationField] || '0');
+      const newAmount = current + amountToAdd;
+  
+      // ✅ Update products
+      await db.ref(`products/${session.key}`).update({
+        [locationField]: newAmount.toString()
+      });
+  
+      // ✅ Log to /added_product
+      await db.ref('added_product').push({
+        name: session.data.name,
+        code: session.data.code,
+        amount_added: amountToAdd,
+        date_added: Date.now(),
+        new_amount: newAmount,
+        location: session.location
+      });
+  
+      await bot.sendMessage(chatId, `✅ Updated ${session.location.toUpperCase()} quantity.\nNew total: ${newAmount}`);
+      delete addProductSessions[chatId];
+      return;
+    }
+  
+  });
+  
+  
   
 
   bot.onText(/\/list/, async (msg) => {
@@ -677,6 +770,10 @@ bot.on('callback_query', async (callbackQuery) => {
               {
                 text: '✏️ Edit Product',
                 callback_data: `admin_edit_${p.code}`
+              },
+              {
+                text: '🗑️ Add Product',
+                callback_data: `admin_add_product_${state.data.code}`
               }
             ]]
           }
