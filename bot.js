@@ -508,7 +508,6 @@ function sendEditMenu(chatId, product) {
   });
   
 
-
   bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
   
@@ -518,57 +517,51 @@ function sendEditMenu(chatId, product) {
       return;
     }
   
-    // ----------- Screenshot Session ------------
+    // ───── 📸 Screenshot Upload Flow ─────────────────────
     const screenshotSession = screenshotSessions[chatId];
     if (screenshotSession) {
+      console.log('📸 Screenshot flow');
+  
       if (screenshotSession.step === 'awaiting_id' && msg.text) {
         const id = msg.text.trim();
-  
         if (!/^\d{4}$/.test(id)) {
           return bot.sendMessage(chatId, `❌ Screenshot ID must be exactly 4 digits. Try again.`);
         }
   
-        const screenshotRef = db.ref(`Screenshot_id/${id}`);
-        const snapshot = await screenshotRef.once('value');
-  
+        const snapshot = await db.ref(`Screenshot_id/${id}`).once('value');
         if (snapshot.exists()) {
-          return bot.sendMessage(chatId, `❌ Screenshot ID *${id}* is already taken. Please send a different 4-digit ID:`, {
-            parse_mode: 'Markdown'
-          });
+          return bot.sendMessage(chatId, `❌ Screenshot ID *${id}* is already taken. Try a different one:`, { parse_mode: 'Markdown' });
         }
   
         screenshotSession.screenshotId = id;
         screenshotSession.step = 'awaiting_photo';
-        return bot.sendMessage(chatId, `✅ Screenshot ID set to *${id}*\n📤 Now send the screenshot photo:`, {
-          parse_mode: 'Markdown'
-        });
+        return bot.sendMessage(chatId, `✅ Screenshot ID set to *${id}*\n📤 Now send the screenshot photo:`, { parse_mode: 'Markdown' });
       }
   
-      if (screenshotSession.step === 'awaiting_photo' && msg.photo) {
-        const fileId = msg.photo[msg.photo.length - 1].file_id;
-        const screenshotRef = db.ref(`Screenshot_id/${screenshotSession.screenshotId}`);
-        await screenshotRef.set({
-          date: new Date().toISOString(),
-          image: fileId
-        });
+      if (screenshotSession.step === 'awaiting_photo') {
+        if (msg.photo) {
+          const fileId = msg.photo[msg.photo.length - 1].file_id;
+          await db.ref(`Screenshot_id/${screenshotSession.screenshotId}`).set({
+            image: fileId,
+            date: new Date().toISOString()
+          });
   
-        delete screenshotSessions[chatId];
-        return bot.sendMessage(chatId, `✅ Screenshot saved successfully under ID *${screenshotSession.screenshotId}*`, {
-          parse_mode: 'Markdown'
-        });
+          delete screenshotSessions[chatId];
+          return bot.sendMessage(chatId, `✅ Screenshot saved under ID *${screenshotSession.screenshotId}*`, { parse_mode: 'Markdown' });
+        }
+  
+        if (msg.text && !msg.text.startsWith('/')) {
+          return bot.sendMessage(chatId, `❌ Please send a valid photo.`);
+        }
       }
   
-      if (screenshotSession.step === 'awaiting_photo' && !msg.photo) {
-        if (msg.text && msg.text.startsWith('/')) return;
-        return bot.sendMessage(chatId, `❌ Please send a valid photo.`);
-      }
-  
-      return; // prevent continuing to other sessions
+      return; // 🔒 Block other flows
     }
   
-    // ----------- Add Product Session ------------
+    // ───── 🏪 Add Product Amount Flow ─────────────────────
     const addSession = addProductSessions[chatId];
     if (addSession && msg.text && !isNaN(msg.text)) {
+      console.log('➕ Add Product flow');
       const amountToAdd = parseInt(msg.text);
       const locationField = addSession.location === 'suq' ? 'amount_suq' : 'amount_store';
       const current = parseInt(addSession.data[locationField] || '0');
@@ -592,9 +585,11 @@ function sendEditMenu(chatId, product) {
       return;
     }
   
-    // ----------- Edit Product Session ------------
+    // ───── ✏️ Edit Product Flow ─────────────────────
     const editSession = editSessions[chatId];
     if (editSession) {
+      console.log('✏️ Edit Product flow');
+  
       const updateAndReturn = (field, value) => {
         editSession.data[field] = value;
         editSession.step = 'menu';
@@ -604,8 +599,7 @@ function sendEditMenu(chatId, product) {
   
       if (editSession.step === 'awaiting_code' && msg.text) {
         const code = msg.text.trim();
-        const snapshot = await db.ref('products').once('value');
-        const products = snapshot.val();
+        const products = (await db.ref('products').once('value')).val();
         let foundKey = null;
   
         for (let key in products) {
@@ -630,15 +624,14 @@ function sendEditMenu(chatId, product) {
       }
   
       if (editSession.step === 'menu' && msg.text) {
-        const choice = msg.text.trim();
-        switch (choice) {
-          case '1': editSession.step = 'edit_name'; return bot.sendMessage(chatId, `✏️ ስም: ${editSession.data.name}\nEnter new name:`);
-          case '2': editSession.step = 'edit_code'; return bot.sendMessage(chatId, `✏️ Code: ${editSession.data.code || 'N/A'}\nEnter new code:`);
-          case '3': editSession.step = 'edit_cost'; return bot.sendMessage(chatId, `✏️ የተገዛበት ዋጋ: ${editSession.data.cost || 'N/A'}\nEnter new cost price:`);
-          case '4': editSession.step = 'edit_selling'; return bot.sendMessage(chatId, `✏️ የሚሸጥበት ዋጋ: ${editSession.data.selling || 'N/A'}\nEnter new selling price:`);
-          case '5': editSession.step = 'edit_store'; return bot.sendMessage(chatId, `✏️ Store ያለ ፈሬ: ${editSession.data.amount_store || 'N/A'}\nEnter new amount:`);
-          case '6': editSession.step = 'edit_suq'; return bot.sendMessage(chatId, `✏️ Suq ያለ ፈሬ: ${editSession.data.amount_suq || 'N/A'}\nEnter new amount:`);
-          case '7': editSession.step = 'edit_image'; return bot.sendMessage(chatId, `📸 አዲስ Photo ይላኩ:`);
+        switch (msg.text.trim()) {
+          case '1': editSession.step = 'edit_name'; return bot.sendMessage(chatId, `✏️ Enter new name:`);
+          case '2': editSession.step = 'edit_code'; return bot.sendMessage(chatId, `✏️ Enter new code:`);
+          case '3': editSession.step = 'edit_cost'; return bot.sendMessage(chatId, `✏️ Enter new cost price:`);
+          case '4': editSession.step = 'edit_selling'; return bot.sendMessage(chatId, `✏️ Enter new selling price:`);
+          case '5': editSession.step = 'edit_store'; return bot.sendMessage(chatId, `✏️ Enter new store amount:`);
+          case '6': editSession.step = 'edit_suq'; return bot.sendMessage(chatId, `✏️ Enter new suq amount:`);
+          case '7': editSession.step = 'edit_image'; return bot.sendMessage(chatId, `📸 Send new photo:`);
   
           case '8':
             await db.ref('products/' + editSession.key).update({
@@ -652,8 +645,8 @@ function sendEditMenu(chatId, product) {
   1) ስም: ${editSession.data.name}
   2) የተገዛበት ዋጋ: ${editSession.data.cost || 'N/A'}
   3) የሚሸጥበት ዋጋ: ${editSession.data.selling || 'N/A'}
-  4) Store ያለ ፈሬ: ${editSession.data.amount_store || 'N/A'}
-  5) Suq ያለ ፈሬ: ${editSession.data.amount_suq || 'N/A'}
+  4) Store: ${editSession.data.amount_store || 'N/A'}
+  5) Suq: ${editSession.data.amount_suq || 'N/A'}
   👤 Edited by: @${msg.from.username || msg.from.first_name}
             `.trim();
   
@@ -667,13 +660,15 @@ function sendEditMenu(chatId, product) {
               }
             });
   
-            bot.sendMessage(chatId, '✅ You have successfully finished editing this product.');
+            bot.sendMessage(chatId, '✅ Product updated successfully.');
             delete editSessions[chatId];
             return;
   
           default:
-            if (msg.text.startsWith('/')) return;
-            return bot.sendMessage(chatId, '❌ Invalid choice. Type a number from 1 to 7.');
+            if (!msg.text.startsWith('/')) {
+              return bot.sendMessage(chatId, '❌ Invalid choice. Type a number from 1 to 7.');
+            }
+            return;
         }
       }
   
@@ -691,46 +686,48 @@ function sendEditMenu(chatId, product) {
       return;
     }
   
-    // ----------- New Product Flow (userStates) ------------
+    // ───── 🆕 New Product Creation Flow ─────────────────────
     const userSession = userStates[chatId];
     if (userSession) {
+      console.log('🆕 Add New Product flow');
+  
       const step = userSession.step;
       const text = msg.text;
   
       if (step === 'awaiting_image' && msg.photo) {
         userSession.data.image = msg.photo[msg.photo.length - 1].file_id;
         userSession.step = 'awaiting_name';
-        return bot.sendMessage(chatId, '📝 አሁን የእቃውን ስም.');
+        return bot.sendMessage(chatId, '📝 Send product name:');
       }
   
       if (step === 'awaiting_name' && text) {
         userSession.data.name = text;
         userSession.step = 'awaiting_code';
-        return bot.sendMessage(chatId, '🔢 አሁን የእቃውን code.');
+        return bot.sendMessage(chatId, '🔢 Send product code:');
       }
   
       if (step === 'awaiting_code' && text) {
         userSession.data.code = text;
         userSession.step = 'awaiting_cost';
-        return bot.sendMessage(chatId, '💰 አሁን የተገዛበት ዋጋ ወይም Skip ብሎ ይፃፉ');
+        return bot.sendMessage(chatId, '💰 Send cost price or type Skip:');
       }
   
       if (step === 'awaiting_cost' && text) {
         userSession.data.cost = text.toLowerCase() === 'skip' ? null : text;
         userSession.step = 'awaiting_selling';
-        return bot.sendMessage(chatId, '💵 አሁን የሚሸጥበት ዋጋ ወይም Skip ብሎ ይፃፉ');
+        return bot.sendMessage(chatId, '💵 Send selling price or type Skip:');
       }
   
       if (step === 'awaiting_selling' && text) {
         userSession.data.selling = text.toLowerCase() === 'skip' ? null : text;
         userSession.step = 'awaiting_store';
-        return bot.sendMessage(chatId, '📦 Store ያለ ፈሬ ወይም Skip ብሎ ይፃፉ.');
+        return bot.sendMessage(chatId, '📦 Enter store amount or Skip:');
       }
   
       if (step === 'awaiting_store' && text) {
         userSession.data.amount_store = text.toLowerCase() === 'skip' ? null : text;
         userSession.step = 'awaiting_suq';
-        return bot.sendMessage(chatId, '🏪 Suq ያለ ፈሬ ወይም Skip ብሎ ይፃፉ.');
+        return bot.sendMessage(chatId, '🏪 Enter suq amount or Skip:');
       }
   
       if (step === 'awaiting_suq' && text) {
@@ -743,20 +740,20 @@ function sendEditMenu(chatId, product) {
           createdAt: Date.now()
         });
   
-        const adminMessage = `
-  🆕 አዲስ እቃ ተመዝግቦዋል:
+        const adminMsg = `
+  🆕 አዲስ እቃ ተመዝግቧል:
   
   📝 ስም: ${userSession.data.name}
   🔢 Code: ${userSession.data.code}
-  💰 የተገዛበት እቃ: ${userSession.data.cost || 'N/A'}
-  💵 የሚሸጥበት እቃ: ${userSession.data.selling || 'N/A'}
-  📦 Store ያለ ፍሬ: ${userSession.data.amount_store || 'N/A'}
-  🏪 Suq ያለ ፍሬ: ${userSession.data.amount_suq || 'N/A'}
+  💰 Cost: ${userSession.data.cost || 'N/A'}
+  💵 Selling: ${userSession.data.selling || 'N/A'}
+  📦 Store: ${userSession.data.amount_store || 'N/A'}
+  🏪 Suq: ${userSession.data.amount_suq || 'N/A'}
   👤 From: @${msg.from.username || msg.from.first_name}
         `.trim();
   
         await bot.sendPhoto(process.env.ADMIN_CHAT_ID, userSession.data.image, {
-          caption: adminMessage,
+          caption: adminMsg,
           reply_markup: {
             inline_keyboard: [[
               { text: '✏️ Edit Product', callback_data: `admin_edit_${userSession.data.code}` },
@@ -765,10 +762,12 @@ function sendEditMenu(chatId, product) {
           }
         });
   
-        bot.sendMessage(chatId, '✅ Item registered and sent to admin.');
+        bot.sendMessage(chatId, '✅ Product added and sent to admin.');
         delete userStates[chatId];
         return;
       }
     }
+  
   });
+  
   
