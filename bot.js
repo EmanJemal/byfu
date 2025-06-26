@@ -773,11 +773,12 @@ function sendEditMenu(chatId, product) {
               },
               {
                 text: '🗑️ Add Product',
-                callback_data: `admin_add_product_${state.data.code}`
+                callback_data: `admin_add_product_${p.code}` // ✅ FIXED
               }
             ]]
           }
         };
+        
   
         if (p.image) {
           await bot.sendPhoto(chatId, p.image, {
