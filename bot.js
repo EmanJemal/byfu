@@ -69,7 +69,6 @@ db.ref('purchases').on('child_added', async (snapshot) => {
   const purchase = snapshot.val();
   const key = snapshot.key;
 
-  // Only handle purchases made after bot start time
   if (!purchase || new Date(purchase.date).getTime() < purchaseStartTime) return;
 
   const { customerName, date, screenshotIds = [], products = [] } = purchase;
@@ -78,22 +77,40 @@ db.ref('purchases').on('child_added', async (snapshot) => {
     const chatId = admin.id;
 
     for (let p of products) {
-      const productSnap = await db.ref(`products/${p.id}`).once('value');
-      const productData = productSnap.val();
-      const imageId = productData?.image;
+      const productRef = db.ref(`products/${p.id}`);
+      const productSnap = await productRef.once('value');
+      const product = productSnap.val();
+      if (!product) continue;
 
-      let caption = `✅ ✅ ✅ ✅ ✅ \n🛒 *New Sale*\n👤 Customer: *${customerName}*\n📦 Product: *${p.name}* (${p.choice})\n🔢 Qty: *${p.qty}*\n💰 Price: *${p.price}* Birr`;
+      // Get quantity to subtract
+      const qty = parseInt(p.qty) || 0;
+      const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
+      const currentAmount = parseInt(product[location]) || 0;
+      const newAmount = Math.max(0, currentAmount - qty); // prevent negative
+
+      // Update database
+      await productRef.update({ [location]: newAmount });
+
+      // Notify admin
+      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n🔢 Qty: *${qty}*\n💰 Price: *${p.price}* Birr`;
       if (p.qabd) caption += `\n💵 Qabd: *${p.qabd}* Birr`;
+      caption += `\n📉 Remaining in ${p.choice}: *${newAmount}*`;
       caption += `\n📅 ${new Date(date).toLocaleString()}`;
 
-      if (imageId?.startsWith("AgA")) {
-        await bot.sendPhoto(chatId, imageId, { caption, parse_mode: "Markdown" });
+      const photo = (product.image?.startsWith('AgA') ? product.image : null);
+      if (photo) {
+        await bot.sendPhoto(chatId, photo, {
+          caption,
+          parse_mode: "Markdown"
+        });
       } else {
-        await bot.sendMessage(chatId, caption, { parse_mode: "Markdown" });
+        await bot.sendMessage(chatId, caption, {
+          parse_mode: "Markdown"
+        });
       }
     }
 
-    // Send all screenshots
+    // Send screenshots
     for (let ssId of screenshotIds) {
       const ssSnap = await db.ref(`Screenshot_id/${ssId}`).once('value');
       const ssData = ssSnap.val();
@@ -108,6 +125,8 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 
   console.log(`✅ Notified admins about new purchase: ${key}`);
 });
+
+
 
 
 

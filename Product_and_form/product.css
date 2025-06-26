@@ -72,7 +72,7 @@
   
 
 /*button*/
-.action-btn{
+.action-btn,.action-btn-sub{
   background-color: #d91717;
   color: white;
   border: none;
@@ -83,11 +83,11 @@
   margin-top: 12px;
   transition: background-color 0.3s ease;
 }
-.action-btn{
+.action-btn,.action-btn-sub{
   width: 50%;
   margin-left: 80px;
 }
 
-.action-btn:hover{
+.action-btn:hover, .action-btn-sub:hover{
   background-color: #980e0e;
 }
