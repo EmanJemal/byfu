@@ -18,7 +18,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
     window.location.href = "../index.html";   // 🔁 Redirect to login
   });
 
-//  const expectedKey = "8797254sa4d864fasdf1ads65f4652cas9+d7v41sad67vf48d5v6ss0d2v4as6d53v28d+f41sd984v56sd+v9+85sda-9dsv*/ds-";
+//  const expectedKey = "8799000055468";
 //  const currentKey = localStorage.getItem("deviceKey");
 
  if (currentKey !== expectedKey) {
