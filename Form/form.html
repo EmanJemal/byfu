@@ -67,10 +67,8 @@
 
       </div>
       
-      <div id="screenshotPreview" style="margin-top: 10px;"></div>
       
   
-      <div id="screenshotPreview" style="margin-top: 10px;"></div>
   
       <div class="bot-code">
         <h3>Bot Code</h3>
@@ -244,7 +242,10 @@
   
       selectedProducts.forEach((_, i) => {
         const amtDiv = document.querySelectorAll('.amt')[i];
-        amtDiv.querySelector('h3').textContent = isFull ? "Amount In Birr" : "Left to Pay";
+        const label = amtDiv.querySelector('h3');
+        if (label) {
+          label.textContent = isFull ? "Amount In Birr" : "Left to Pay";
+        }
   
         let qabdInput = amtDiv.querySelector('.qabd-container');
         if (!isFull && !qabdInput) {
