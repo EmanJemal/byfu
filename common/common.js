@@ -21,9 +21,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 //  const expectedKey = "8799000055468";
 //  const currentKey = localStorage.getItem("deviceKey");
 
- if (currentKey !== expectedKey) {
-    document.body.innerHTML = "⛔ Unauthorized device. Access denied";
-}
+
 
 bot.onText(/\/cancel/, (msg) => {
   const chatId = msg.chat.id;
