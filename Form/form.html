@@ -13,50 +13,49 @@
 <body>
 
   <header class="header">
-    <div>    <div><button class="action-btn"  id="logout-btn">Log Out</button></div>  </div>
+    <div><button class="action-btn" id="logout-btn">Log Out</button></div>
     <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
     <div></div>
   </header>
 
   <form class="form-1" id="userForm">
 
-    <!-- LEFT COLUMN (div 1) -->
+    <!-- LEFT COLUMN -->
     <div>
       <h1 class="title">Information</h1>
-  
+
       <div class="customer-name">
         <h3>Customer Name</h3>
-        <input type="text" id="customerName" class="text-number" name="customerName">
+        <input type="text" id="customerName" class="text-number" name="customerName" required>
       </div>
-  
+
       <div class="Tin-Number">
         <h3>Tin Number</h3>
         <input type="number" id="tinNumber" class="text-number" name="tinNumber">
       </div>
-  
+
       <div class="Full-Half-Payment">
         <h3 style="display: inline-block;">Full Payment</h3>
         <input type="checkbox" id="fullPayment" class="checkbox" checked name="fullPayment">
       </div>
-  
-      <!-- ✅ This is where products should load -->
+
       <div id="productContainer"></div>
-  
-      <h3>Total Ammount: <span id="totalDisplay">0</span> Birr</h3>
+
+      <h3>Total Amount: <span id="totalDisplay">0</span> Birr</h3>
     </div>
-  
-    <!-- RIGHT COLUMN (div 2) -->
+
+    <!-- RIGHT COLUMN -->
     <div>
       <div class="Cash-Mobile">
         <h3 style="display: inline-block;">Mobile bank</h3>
         <input type="checkbox" id="mobileBank" class="checkbox" name="mobileBank">
       </div>
-  
+
       <div class="full-set">
         <h3 style="display: inline-block;">Full Set</h3>
         <input type="checkbox" id="fullSet" class="checkbox" name="fullSet">
       </div>
-  
+
       <div class="Payment-screenshot">
         <h3>Payment Screenshot IDs</h3>
         <div id="screenshotInputs">
@@ -64,22 +63,17 @@
         </div>
         <button type="button" id="addScreenshotId" class="action-btn">➕ Add Screenshot ID</button>
         <div id="screenshotPreview" style="margin-top: 10px;"></div>
-
       </div>
-      
-      
-  
-  
+
       <div class="bot-code">
         <h3>Bot Code</h3>
-        <input type="number" id="botCode" class="text-number" name="botCode">
+        <input type="number" id="botCode" class="text-number" name="botCode" required>
         <button type="button" id="sendCode" class="action-btn"><i class="fa-brands fa-telegram"></i>Send Code</button>
         <button type="submit" class="submit-btn">Log In</button>
       </div>
     </div>
-  
+
   </form>
-  
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -96,11 +90,11 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-  
+
     const productContainer = document.getElementById('productContainer');
     const totalDisplay = document.getElementById('totalDisplay');
     const selectedProducts = JSON.parse(localStorage.getItem('selectedProducts') || '[]');
-  
+
     function updateTotal() {
       let total = 0;
       selectedProducts.forEach((_, i) => {
@@ -109,16 +103,44 @@
       });
       totalDisplay.textContent = total.toLocaleString();
     }
-  
+
+    function updatePaymentInputs() {
+      const isFull = document.getElementById('fullPayment').checked;
+      selectedProducts.forEach((_, i) => {
+        const amtDiv = document.querySelectorAll('.amt')[i];
+        const label = amtDiv.querySelector('h3');
+        if (label) {
+          label.textContent = isFull ? "Amount In Birr" : "Left to Pay";
+        }
+
+        let qabdInput = amtDiv.querySelector('.qabd-container');
+        if (!isFull && !qabdInput) {
+          qabdInput = document.createElement('div');
+          qabdInput.classList.add('qabd-container');
+          qabdInput.innerHTML = `
+            <h3>Qabd</h3>
+            <input type="number" class="text-number" name="productQabd${i}" placeholder="Paid Amount">
+          `;
+          amtDiv.appendChild(qabdInput);
+        }
+
+        if (isFull && qabdInput) {
+          qabdInput.remove();
+        }
+      });
+    }
+
     selectedProducts.forEach((p, index) => {
       db.ref(`products/${p.id}`).once('value').then(snapshot => {
         const productData = snapshot.val();
+        if (!productData) return;
+
         const image = productData?.image?.startsWith("AgA")
           ? `https://byfu-production-fe07.up.railway.app/telegram-image/${productData.image}`
           : (productData?.image?.startsWith("http")
               ? productData.image
               : "../products/placeholder.jpg");
-  
+
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
@@ -133,16 +155,15 @@
           </div>
         `;
         productContainer.appendChild(productDiv);
-  
+
         productDiv.querySelector(`[name=productAmt${index}]`).addEventListener('input', updateTotal);
       });
     });
-  
-    // ─── Screenshot ID Section ───────────────────────────
+
     const screenshotInputsDiv = document.getElementById('screenshotInputs');
     const addScreenshotBtn = document.getElementById('addScreenshotId');
     const preview = document.getElementById('screenshotPreview');
-  
+
     addScreenshotBtn.addEventListener('click', () => {
       const newInput = document.createElement('input');
       newInput.type = 'text';
@@ -150,19 +171,19 @@
       newInput.placeholder = 'Screenshot ID';
       screenshotInputsDiv.appendChild(newInput);
     });
-  
+
     function updateScreenshotPreview() {
       const ids = [...document.querySelectorAll('.screenshot-id')]
         .map(input => input.value.trim())
         .filter(id => id);
-  
+
       preview.innerHTML = '';
       ids.forEach(id => {
         db.ref(`Screenshot_id/${id}`).once('value').then(snapshot => {
           const data = snapshot.val();
           const container = document.createElement('div');
           container.style.marginBottom = '10px';
-  
+
           if (data && data.image) {
             const image = data.image.startsWith("AgA")
               ? `https://byfu-production-fe07.up.railway.app/telegram-image/${data.image}`
@@ -175,18 +196,20 @@
           } else {
             container.innerHTML = `<p style='color:red'>No screenshot found for ID: ${id}</p>`;
           }
-  
+
           preview.appendChild(container);
         });
       });
     }
-  
+
     screenshotInputsDiv.addEventListener('input', updateScreenshotPreview);
-  
-    // ─── Submit Handler ────────────────────────────────
-    document.getElementById('userForm').addEventListener('submit', (e) => {
+
+    document.getElementById('fullPayment').addEventListener('change', updatePaymentInputs);
+    updatePaymentInputs(); // Run on load
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-  
+
       const customerName = document.getElementById('customerName').value.trim();
       const tinNumber = document.getElementById('tinNumber').value.trim();
       const fullPayment = document.getElementById('fullPayment').checked;
@@ -194,21 +217,21 @@
       const fullSet = document.getElementById('fullSet').checked;
       const botCode = document.getElementById('botCode').value.trim();
       const date = new Date().toISOString();
-  
+
       const screenshotIds = [...document.querySelectorAll('.screenshot-id')]
         .map(input => input.value.trim())
         .filter(id => id);
-  
+
       const products = selectedProducts.map((p, i) => ({
         id: p.id,
         name: p.name,
         code: p.code,
         choice: p.choice,
-        qty: document.querySelector(`[name=productQty${i}]`).value,
-        price: document.querySelector(`[name=productAmt${i}]`).value,
+        qty: document.querySelector(`[name=productQty${i}]`)?.value,
+        price: document.querySelector(`[name=productAmt${i}]`)?.value,
         qabd: document.querySelector(`[name=productQabd${i}]`)?.value || null
       }));
-  
+
       const purchaseData = {
         customerName,
         tinNumber,
@@ -220,55 +243,39 @@
         date,
         products
       };
-  
-      db.ref('purchases').push(purchaseData)
-        .then(() => {
-          alert('✅ Purchase recorded successfully!');
-          localStorage.removeItem('selectedProducts');
-          document.getElementById('userForm').reset();
-          productContainer.innerHTML = "";
-          preview.innerHTML = "";
-          updateTotal();
-        })
-        .catch(err => {
-          console.error("Error saving purchase:", err);
-          alert('❌ Failed to save purchase. Try again.');
-        });
-    });
-  
-    // ─── Qabd (Partial Payment) Handling ─────────────────
-    document.getElementById('fullPayment').addEventListener('change', () => {
-      const isFull = document.getElementById('fullPayment').checked;
-  
-      selectedProducts.forEach((_, i) => {
-        const amtDiv = document.querySelectorAll('.amt')[i];
-        const label = amtDiv.querySelector('h3');
-        if (label) {
-          label.textContent = isFull ? "Amount In Birr" : "Left to Pay";
+
+      try {
+        await db.ref('purchases').push(purchaseData);
+
+        for (const p of products) {
+          const { code, choice, qty } = p;
+          if (!code || !qty || isNaN(qty)) continue;
+
+          const productsSnap = await db.ref('products').once('value');
+          const productsData = productsSnap.val();
+          const productKey = Object.keys(productsData || {}).find(key => productsData[key].code === code);
+
+          if (productKey) {
+            const product = productsData[productKey];
+            const field = choice === 'suq' ? 'amount_suq' : 'amount_store';
+            const currentQty = parseInt(product[field] || 0);
+            const newQty = Math.max(0, currentQty - parseInt(qty));
+
+            await db.ref(`products/${productKey}`).update({ [field]: newQty });
+          }
         }
-  
-        let qabdInput = amtDiv.querySelector('.qabd-container');
-        if (!isFull && !qabdInput) {
-          qabdInput = document.createElement('div');
-          qabdInput.classList.add('qabd-container');
-          qabdInput.innerHTML = `
-            <h3>Qabd</h3>
-            <input type="number" class="text-number" name="productQabd${i}" placeholder="Paid Amount">
-          `;
-          amtDiv.appendChild(qabdInput);
-        }
-  
-        if (isFull && qabdInput) {
-          qabdInput.remove();
-        }
-      });
+
+        alert('✅ Purchase recorded and inventory updated!');
+        localStorage.removeItem('selectedProducts');
+        document.getElementById('userForm').reset();
+        productContainer.innerHTML = "";
+        preview.innerHTML = "";
+        updateTotal();
+      } catch (err) {
+        console.error("Error saving purchase:", err);
+        alert('❌ Failed to save purchase. Try again.');
+      }
     });
   </script>
-  
-  
-  
-  
-  
-
 </body>
 </html>
