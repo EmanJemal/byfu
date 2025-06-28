@@ -466,6 +466,55 @@ function sendEditMenu(chatId, product) {
   });
 
   
+  bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const session = addProductSessions[chatId];
+  
+    if (!session) return;
+  
+    // ✅ Transfer flow
+    if (session.step === 'awaiting_transfer_amount') {
+      const amount = parseInt(msg.text);
+      if (isNaN(amount) || amount <= 0) {
+        return bot.sendMessage(chatId, '❌ Please enter a valid number greater than 0.');
+      }
+  
+      try {
+        const productRef = db.ref(`products/${session.key}`);
+        const snapshot = await productRef.once('value');
+        const product = snapshot.val();
+  
+        const fromAmount = session.transfer.from === 'suq' ? product.amount_suq || 0 : product.amount_store || 0;
+  
+        // ❌ Not enough to transfer
+        if (fromAmount < amount) {
+          return bot.sendMessage(chatId, `🚫 Not enough items in ${session.transfer.from === 'suq' ? 'Suq' : 'Store'} to transfer.`);
+        }
+  
+        // ✅ Perform the transfer
+        const newFrom = fromAmount - amount;
+        const toAmount = session.transfer.to === 'suq' ? product.amount_suq || 0 : product.amount_store || 0;
+        const newTo = toAmount + amount;
+  
+        // 🔄 Update Firebase
+        await productRef.update({
+          [`amount_${session.transfer.from}`]: newFrom,
+          [`amount_${session.transfer.to}`]: newTo,
+        });
+  
+        // ✅ Clear session
+        delete addProductSessions[chatId];
+  
+        return bot.sendMessage(chatId, `✅ Transferred ${amount} items from ${session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'} to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}.`);
+  
+      } catch (err) {
+        console.error(err);
+        bot.sendMessage(chatId, '❌ Failed to complete the transfer. Please try again.');
+      }
+    }
+  });
+
+  
 
   bot.onText(/\/list/, async (msg) => {
     const chatId = msg.chat.id;
