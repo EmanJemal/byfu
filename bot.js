@@ -485,9 +485,9 @@ function sendEditMenu(chatId, product) {
         const product = snapshot.val();
     
         // 🔢 Make sure amounts are numbers
-        const fromAmount = Number(session.transfer.from === 'suq' ? product.amount_suq : product.amount_store) || 0;
-        const toAmount = Number(session.transfer.to === 'suq' ? product.amount_suq : product.amount_store) || 0;
-    
+        const fromAmount = parseInt(session.transfer.from === 'suq' ? product.amount_suq : product.amount_store) || 0;
+        const toAmount = parseInt(session.transfer.to === 'suq' ? product.amount_suq : product.amount_store) || 0;
+        
         if (fromAmount < amount) {
           return bot.sendMessage(chatId, `🚫 Not enough items in ${session.transfer.from === 'suq' ? 'Suq' : 'Store'} to transfer.`);
         }
@@ -502,9 +502,9 @@ function sendEditMenu(chatId, product) {
         });
     
         // ✅ Notify user with updated values
-        const storeDisplay = session.transfer.to === 'store' ? newTo : newFrom;
-        const suqDisplay = session.transfer.to === 'suq' ? newTo : newFrom;
-    
+        const storeDisplay = session.transfer.from === 'store' ? newFrom : newTo;
+        const suqDisplay = session.transfer.from === 'suq' ? newFrom : newTo;
+        
         delete addProductSessions[chatId];
     
         return bot.sendMessage(chatId,
@@ -512,6 +512,7 @@ function sendEditMenu(chatId, product) {
           `📦 Store: ${storeDisplay}\n` +
           `🏪 Suq: ${suqDisplay}`
         );
+        
     
       } catch (err) {
         console.error(err);
