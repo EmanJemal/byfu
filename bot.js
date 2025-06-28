@@ -226,9 +226,7 @@ console.log('✅ Bot is up and running...');
     parseInt(process.env.ADMIN_CHAT_ID),
     parseInt(process.env.ADMIN_1_CHAT_ID),
     parseInt(process.env.ADMIN_2_CHAT_ID),
-    parseInt(process.env.ADMIN_3_CHAT_ID),
-    parseInt(process.env.Abdela)
-  ];
+    parseInt(process.env.ADMIN_3_CHAT_ID)  ];
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
@@ -479,7 +477,110 @@ function sendEditMenu(chatId, product) {
     }
   });
   
+  bot.onText(/\/listm/, async (msg) => {
+    const chatId = msg.chat.id;
+  
+    // ✅ Check if user is allowed
+    if (!allowedUsers.includes(chatId)) {
+      console.log(`❌ Unauthorized user attempted to /listm: ${chatId}`);
+      return;
+    }
+  
+    try {
+      const snapshot = await db.ref('products').once('value');
+      const products = snapshot.val();
+  
+      if (!products) {
+        return bot.sendMessage(chatId, '📦 No products found.');
+      }
+  
+      const codeTypes = {
+        '00': '🛋️ List of Sofas',
+        '02': '🍽️ List of Dining Tables',
+        '03': '🪑 List of Chairs',
+        '04': '🪞 List of Center Tables',
+        '05': '🛏️ List of Beds',
+        '06': '🚗 List of Gari',
+        '07': '☕ List of Coffee Tables',
+        '08': '🖼️ List of Photo Frames',
+        '09': '📚 List of Mentafs',
+        '10': '💡 List of Mabrat',
+        '20': '🛋️ List of Consoles',
+        '30': '📺 List of TV Stands',
+        '40': '🎭 List of Ababa Maskemecha',
+        '50': '🛏️ List of Ferash',
+        '60': '🛋️ List of Fur',
+      };
+  
+      // Group by type prefix
+      const grouped = {};
+  
+      for (let key in products) {
+        const code = products[key].code;
+        if (!code || code.length < 2) continue;
+        const prefix = code.substring(0, 2);
+  
+        if (!grouped[prefix]) {
+          grouped[prefix] = [];
+        }
+        grouped[prefix].push(products[key]);
+      }
+  
+      // Send grouped messages in order
+      const orderedPrefixes = Object.keys(codeTypes).sort();
+  
+      for (const prefix of orderedPrefixes) {
+        const group = grouped[prefix];
+        if (!group) continue;
+  
+        // Send category title
+        await bot.sendMessage(chatId, `<b>${codeTypes[prefix]}</b>`, { parse_mode: 'HTML' });
+  
+        // Send each product
+        for (const p of group) {
+          const text = `
+  🛋️ <b>${p.name || 'Unnamed Product'}</b>
+  📦 Code: <code>${p.code}</code>
+  💰 የተገዛበት ዋጋ: ${p.cost || 'N/A'}
+  💵 የሚሸጥበት ዋጋ: ${p.selling || 'N/A'}
+  🏢 Store ያለ ፈሬ: ${p.amount_store || 0}
+  🛍️ Suq ያለ ፈሬ: ${p.amount_suq || 0}
+          `.trim();
+  
+          const opts = {
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: '✏️ Edit Product',
+                  callback_data: `admin_edit_${p.code}`
+                },
+                {
+                  text: '🗑️ Add Product',
+                  callback_data: `admin_add_product_${p.code}`
+                }
+              ]]
+            }
+          };
+  
+          if (p.image) {
+            await bot.sendPhoto(chatId, p.image, {
+              caption: text,
+              ...opts
+            });
+          } else {
+            await bot.sendMessage(chatId, text, opts);
+          }
+        }
+      }
+  
+    } catch (err) {
+      console.error(err);
+      bot.sendMessage(chatId, '❌ Failed to load categorized product list.');
+    }
+  });
 
+  
   bot.onText(/\/cancel/, (msg) => {
     const chatId = msg.chat.id;
   
