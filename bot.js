@@ -402,21 +402,7 @@ function sendEditMenu(chatId, product) {
       });
     }
   
-    if (data.startsWith('transfer_')) {
-      session.transfer = {
-        from: data === 'transfer_suq_to_store' ? 'suq' : 'store',
-        to: data === 'transfer_suq_to_store' ? 'store' : 'suq'
-      };
-      session.step = 'awaiting_transfer_amount';
-  
-      bot.answerCallbackQuery(callbackQuery.id);
-      return bot.sendMessage(
-        chatId,
-        `🔁 How many items do you want to transfer from ${
-          session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'
-        } to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}?`
-      );
-    }
+
     
     // ✅ Handle Suq or Store choice
     if (
@@ -428,19 +414,34 @@ function sendEditMenu(chatId, product) {
       const session = addProductSessions[chatId];
       if (!session) return;
     
+      bot.answerCallbackQuery(callbackQuery.id);
+    
       if (data.startsWith('add_to_')) {
         session.location = data === 'add_to_suq' ? 'suq' : 'store';
         session.step = 'awaiting_amount';
     
-        bot.answerCallbackQuery(callbackQuery.id);
         return bot.sendMessage(
           chatId,
           `✍️ How many items were added to ${session.location === 'suq' ? '🏪 Suq' : '📦 Store'}?`
         );
       }
     
-
+      if (data.startsWith('transfer_')) {
+        session.transfer = {
+          from: data === 'transfer_suq_to_store' ? 'suq' : 'store',
+          to: data === 'transfer_suq_to_store' ? 'store' : 'suq'
+        };
+        session.step = 'awaiting_transfer_amount';
+    
+        return bot.sendMessage(
+          chatId,
+          `🔁 How many items do you want to transfer from ${
+            session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'
+          } to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}?`
+        );
+      }
     }
+    
     
   });
 
