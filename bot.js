@@ -361,6 +361,26 @@ function sendEditMenu(chatId, product) {
     }
   
     // ✅ Admin Add Product Button
+
+    if (data === 'transfer_stock') {
+      const session = addProductSessions[chatId];
+      if (!session) return;
+    
+      session.step = 'awaiting_transfer_direction';
+    
+      bot.answerCallbackQuery(callbackQuery.id);
+      return bot.sendMessage(chatId, `🔁 Transfer from which location?`, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '🏪 Suq ➡️ 📦 Store', callback_data: 'transfer_suq_to_store' },
+              { text: '📦 Store ➡️ 🏪 Suq', callback_data: 'transfer_store_to_suq' }
+            ]
+          ]
+        }
+      });
+    }
+    
     if (data.startsWith('admin_add_product_')) {
       if (!allowedUsers.includes(chatId)) return;
   
