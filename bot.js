@@ -394,24 +394,54 @@ function sendEditMenu(chatId, product) {
           inline_keyboard: [
             [
               { text: '🏪 Suq', callback_data: 'add_to_suq' },
-              { text: '📦 Store', callback_data: 'add_to_store' }
+              { text: '📦 Store', callback_data: 'add_to_store' },
+              { text: '🔁 Transfer', callback_data: 'transfer_stock' }
             ]
           ]
         }
       });
     }
   
-    // ✅ Handle Suq or Store choice
-    if (data === 'add_to_suq' || data === 'add_to_store') {
-      const session = addProductSessions[chatId];
-      if (!session) return;
-  
-      session.location = data === 'add_to_suq' ? 'suq' : 'store';
-      session.step = 'awaiting_amount';
+    if (data.startsWith('transfer_')) {
+      session.transfer = {
+        from: data === 'transfer_suq_to_store' ? 'suq' : 'store',
+        to: data === 'transfer_suq_to_store' ? 'store' : 'suq'
+      };
+      session.step = 'awaiting_transfer_amount';
   
       bot.answerCallbackQuery(callbackQuery.id);
-      return bot.sendMessage(chatId, `✍️ How many items were added to ${session.location === 'suq' ? '🏪 Suq' : '📦 Store'}?`);
+      return bot.sendMessage(
+        chatId,
+        `🔁 How many items do you want to transfer from ${
+          session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'
+        } to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}?`
+      );
     }
+    
+    // ✅ Handle Suq or Store choice
+    if (
+      data === 'add_to_suq' ||
+      data === 'add_to_store' ||
+      data === 'transfer_suq_to_store' ||
+      data === 'transfer_store_to_suq'
+    ) {
+      const session = addProductSessions[chatId];
+      if (!session) return;
+    
+      if (data.startsWith('add_to_')) {
+        session.location = data === 'add_to_suq' ? 'suq' : 'store';
+        session.step = 'awaiting_amount';
+    
+        bot.answerCallbackQuery(callbackQuery.id);
+        return bot.sendMessage(
+          chatId,
+          `✍️ How many items were added to ${session.location === 'suq' ? '🏪 Suq' : '📦 Store'}?`
+        );
+      }
+    
+
+    }
+    
   });
 
   
@@ -419,11 +449,11 @@ function sendEditMenu(chatId, product) {
   bot.onText(/\/list/, async (msg) => {
     const chatId = msg.chat.id;
   
-      // ✅ Check if user is allowed
-      if (!allowedUsers.includes(chatId)) {
-        console.log(`❌ Unauthorized user attempted to /start: ${chatId}`);
-        return; // Stop here — do not respond
-      }
+    // ✅ Check if user is allowed
+    if (!allowedUsers.includes(chatId)) {
+      console.log(`❌ Unauthorized user attempted to /list: ${chatId}`);
+      return;
+    }
   
     try {
       const snapshot = await db.ref('products').once('value');
@@ -433,9 +463,15 @@ function sendEditMenu(chatId, product) {
         return bot.sendMessage(chatId, '📦 No products found.');
       }
   
-      for (let key in products) {
-        const p = products[key];
+      // ✅ Convert object to array and sort by numeric code
+      const sortedProducts = Object.values(products).sort((a, b) => {
+        const codeA = parseInt(a.code);
+        const codeB = parseInt(b.code);
+        return codeA - codeB;
+      });
   
+      // ✅ Send each product in order
+      for (const p of sortedProducts) {
         const text = `
   🛋️ <b>${p.name || 'Unnamed Product'}</b>
   📦 Code: <code>${p.code}</code>
@@ -455,12 +491,11 @@ function sendEditMenu(chatId, product) {
               },
               {
                 text: '🗑️ Add Product',
-                callback_data: `admin_add_product_${p.code}` // ✅ FIXED
+                callback_data: `admin_add_product_${p.code}`
               }
             ]]
           }
         };
-        
   
         if (p.image) {
           await bot.sendPhoto(chatId, p.image, {
@@ -471,17 +506,20 @@ function sendEditMenu(chatId, product) {
           await bot.sendMessage(chatId, text, opts);
         }
       }
+  
     } catch (err) {
       console.error(err);
       bot.sendMessage(chatId, '❌ Failed to load product list.');
     }
   });
   
+  
+
   bot.onText(/\/byorder/, async (msg) => {
     const chatId = msg.chat.id;
   
     if (!allowedUsers.includes(chatId)) {
-      console.log(`❌ Unauthorized user attempted to /listm: ${chatId}`);
+      console.log(`❌ Unauthorized user attempted to /byorder: ${chatId}`);
       return;
     }
   
@@ -509,6 +547,7 @@ function sendEditMenu(chatId, product) {
         '40': '🎭 List of Ababa Maskemecha',
         '50': '🛏️ List of Ferash',
         '60': '🛋️ List of Fur',
+        '70': '🖥 List of desks',
       };
   
       // Group codes by type
