@@ -484,8 +484,8 @@ function sendEditMenu(chatId, product) {
         const snapshot = await productRef.once('value');
         const product = snapshot.val();
   
-        const fromAmount = session.transfer.from === 'suq' ? product.amount_suq || 0 : product.amount_store || 0;
-  
+        const fromAmount = Number(session.transfer.from === 'suq' ? product.amount_suq : product.amount_store) || 0;
+          
         // ❌ Not enough to transfer
         if (fromAmount < amount) {
           return bot.sendMessage(chatId, `🚫 Not enough items in ${session.transfer.from === 'suq' ? 'Suq' : 'Store'} to transfer.`);
@@ -493,7 +493,7 @@ function sendEditMenu(chatId, product) {
   
         // ✅ Perform the transfer
         const newFrom = fromAmount - amount;
-        const toAmount = session.transfer.to === 'suq' ? product.amount_suq || 0 : product.amount_store || 0;
+        const toAmount = Number(session.transfer.to === 'suq' ? product.amount_suq : product.amount_store) || 0;
         const newTo = toAmount + amount;
   
         // 🔄 Update Firebase
