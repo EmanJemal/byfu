@@ -477,7 +477,7 @@ function sendEditMenu(chatId, product) {
     }
   });
   
-  bot.onText(/\/listbyorder/, async (msg) => {
+  bot.onText(/\/byorder/, async (msg) => {
     const chatId = msg.chat.id;
   
     if (!allowedUsers.includes(chatId)) {
