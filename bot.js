@@ -478,40 +478,47 @@ function sendEditMenu(chatId, product) {
       if (isNaN(amount) || amount <= 0) {
         return bot.sendMessage(chatId, '❌ Please enter a valid number greater than 0.');
       }
-  
+    
       try {
         const productRef = db.ref(`products/${session.key}`);
         const snapshot = await productRef.once('value');
         const product = snapshot.val();
-  
+    
+        // 🔢 Make sure amounts are numbers
         const fromAmount = Number(session.transfer.from === 'suq' ? product.amount_suq : product.amount_store) || 0;
-          
-        // ❌ Not enough to transfer
+        const toAmount = Number(session.transfer.to === 'suq' ? product.amount_suq : product.amount_store) || 0;
+    
         if (fromAmount < amount) {
           return bot.sendMessage(chatId, `🚫 Not enough items in ${session.transfer.from === 'suq' ? 'Suq' : 'Store'} to transfer.`);
         }
-  
-        // ✅ Perform the transfer
+    
         const newFrom = fromAmount - amount;
-        const toAmount = Number(session.transfer.to === 'suq' ? product.amount_suq : product.amount_store) || 0;
         const newTo = toAmount + amount;
-  
-        // 🔄 Update Firebase
+    
+        // ✅ Update Firebase
         await productRef.update({
           [`amount_${session.transfer.from}`]: newFrom,
           [`amount_${session.transfer.to}`]: newTo,
         });
-  
-        // ✅ Clear session
+    
+        // ✅ Notify user with updated values
+        const storeDisplay = session.transfer.to === 'store' ? newTo : newFrom;
+        const suqDisplay = session.transfer.to === 'suq' ? newTo : newFrom;
+    
         delete addProductSessions[chatId];
-  
-        return bot.sendMessage(chatId, `✅ Transferred ${amount} items from ${session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'} to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}.`);
-  
+    
+        return bot.sendMessage(chatId,
+          `✅ Transferred ${amount} items from ${session.transfer.from === 'suq' ? '🏪 Suq' : '📦 Store'} to ${session.transfer.to === 'suq' ? '🏪 Suq' : '📦 Store'}.\n\n` +
+          `📦 Store: ${storeDisplay}\n` +
+          `🏪 Suq: ${suqDisplay}`
+        );
+    
       } catch (err) {
         console.error(err);
-        bot.sendMessage(chatId, '❌ Failed to complete the transfer. Please try again.');
+        return bot.sendMessage(chatId, '❌ Failed to complete the transfer. Please try again.');
       }
     }
+    
   });
 
   
