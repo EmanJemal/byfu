@@ -626,6 +626,8 @@ function sendEditMenu(chatId, product) {
         '50': '🛏️ List of Ferash',
         '60': '🛋️ List of Fur',
         '70': '🖥 List of desks',
+        '80': ' List of bed side',
+        '90': ' List of comforts',
       };
   
       // Group codes by type

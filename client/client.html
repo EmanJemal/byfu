@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="../common/commo.js"></script>
+  <style>
+    body {
+  font-family: 'Poppins', sans-serif;
+  background: #f9fafb;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+        .card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        padding: 25px 30px;
+        margin-bottom: 25px;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+        }
+
+        h1, h2, h3 {
+        color: #222;
+        margin-bottom: 15px;
+        font-weight: 600;
+        }
+
+        p {
+        font-size: 16px;
+        margin: 8px 0;
+        line-height: 1.4;
+        }
+
+        .products-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        }
+
+        .product-item {
+        background: #f0f4f8;
+        border-radius: 8px;
+        padding: 15px 20px;
+        flex: 1 1 250px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .product-item h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: #0056b3;
+        }
+
+        .product-item .choice {
+        font-weight: 400;
+        color: #555;
+        font-style: italic;
+        font-size: 14px;
+        }
+
+        .screenshots-list {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        }
+
+        .screenshot-id {
+        background: #e2e8f0;
+        border-radius: 6px;
+        padding: 10px 15px;
+        font-weight: 600;
+        color: #1e293b;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        cursor: default;
+        user-select: text;
+        font-size: 14px;
+        min-width: 100px;
+        text-align: center;
+        }
+
+        .actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+        }
+
+        .btn {
+        cursor: pointer;
+        padding: 12px 25px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 16px;
+        transition: background-color 0.25s ease;
+        }
+
+        .delete-btn {
+        background-color: #e53e3e;
+        color: white;
+        }
+
+        .delete-btn:hover {
+        background-color: #c53030;
+        }
+
+        .edit-btn {
+        background-color: #3182ce;
+        color: white;
+        }
+
+        .edit-btn:hover {
+        background-color: #2b6cb0;
+        }
+
+        @media (max-width: 600px) {
+        .products-list {
+            flex-direction: column;
+        }
+
+        .product-item {
+            flex: 1 1 100%;
+        }
+        }
+
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div><button class="action-btn"  id="logout-btn">Log Out</button></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+    
+
+
+  <script>
+    const data = JSON.parse(localStorage.getItem("selectedPurchase"));
+    if (!data) {
+      document.body.innerHTML += "<h2>No client data found</h2>";
+    } else {
+      const container = document.createElement("div");
+      container.style.padding = "20px";
+      
+  
+      container.innerHTML = `
+        <section class="client-info card">
+            <h1>Client Information</h1>
+            <p><strong>Name:</strong> ${data.customerName}</p>
+            <p><strong>Tin Number:</strong> ${data.tinNumber || "N/A"}</p>
+            <p><strong>Full Payment:</strong> ${data.fullPayment ? "Yes" : "No"}</p>
+            <p><strong>Mobile Bank:</strong> ${data.mobileBank ? "Yes" : "No"}</p>
+            <p><strong>Full Set:</strong> ${data.fullSet ? "Yes" : "No"}</p>
+            <p><strong>Bot Code:</strong> ${data.botCode || "N/A"}</p>
+            <p><strong>Date:</strong> ${new Date(data.date).toLocaleString()}</p>
+        </section>
+
+        <section class="products card">
+            <h2>Purchased Products</h2>
+            <div class="products-list">
+            ${data.products.map(p => `
+                <div class="product-item">
+                <img src="${p.image || '../products/placeholder.jpg'}" alt="${p.name}" class="product-image" />
+                <div class="product-details">
+                    <h3>${p.name} <span class="choice">(${p.choice})</span></h3>
+                    <p><strong>Quantity:</strong> ${p.qty}</p>
+                    <p><strong>Price:</strong> ${p.price} Birr</p>
+                    ${p.qabd ? `<p><strong>Qabd (Paid):</strong> ${p.qabd} Birr</p>` : ''}
+                </div>
+                </div>
+            `).join('')}
+            </div>
+        </section>
+
+        <section class="screenshots card">
+            <h2>Payment Screenshots</h2>
+            <div class="screenshots-list">
+            ${(data.screenshotIds || []).map(id => `
+                <div class="screenshot-id">${id}</div>
+            `).join('')}
+            </div>
+        </section>
+
+        <section class="actions card">
+            <button class="btn delete-btn">Delete Purchase</button>
+            <button class="btn edit-btn">Edit Payment</button>
+        </section>
+        `;
+
+  
+      document.body.appendChild(container);
+    }
+
+    localStorage.removeItem("selectedPurchase");
+
+  </script>
+  
+</body>
+</html>

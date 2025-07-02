@@ -41,8 +41,13 @@
   
       <!-- ✅ This is where products should load -->
       <div id="productContainer"></div>
-  
+      
+      <h3 id="qabdTotalContainer" style="display:none;">
+        Total Qabd: <span id="totalQabd">0</span> Birr
+      </h3>
       <h3>Total Ammount: <span id="totalDisplay">0</span> Birr</h3>
+
+      
     </div>
   
     <!-- RIGHT COLUMN (div 2) -->
@@ -98,13 +103,37 @@
     const selectedProducts = JSON.parse(localStorage.getItem('selectedProducts') || '[]');
 
     function updateTotal() {
-      let total = 0;
-      selectedProducts.forEach((_, i) => {
-        const price = parseFloat(document.querySelector(`[name=productAmt${i}]`)?.value || 0);
-        total += isNaN(price) ? 0 : price;
-      });
-      totalDisplay.textContent = total.toLocaleString();
+    let total = 0;
+    selectedProducts.forEach((_, i) => {
+      const price = parseFloat(document.querySelector(`[name=productAmt${i}]`)?.value || 0);
+      total += isNaN(price) ? 0 : price;
+    });
+    totalDisplay.textContent = total.toLocaleString();
+
+    updateTotalQabd(); // 👈 Add this
+  }
+
+
+    function updateTotalQabd() {
+    const isFull = document.getElementById('fullPayment').checked;
+    const container = document.getElementById('qabdTotalContainer');
+    const totalSpan = document.getElementById('totalQabd');
+
+    if (isFull) {
+      container.style.display = 'none';
+      return;
     }
+
+    let total = 0;
+    selectedProducts.forEach((_, i) => {
+      const value = parseFloat(document.querySelector(`[name=productQabd${i}]`)?.value || 0);
+      if (!isNaN(value)) total += value;
+    });
+
+    totalSpan.textContent = total.toLocaleString();
+    container.style.display = 'block';
+  }
+
 
     selectedProducts.forEach((p, index) => {
       db.ref(`products/${p.id}`).once('value').then(snapshot => {
@@ -269,6 +298,8 @@
             <input type="number" class="text-number" name="productQabd${i}" placeholder="Paid Amount">
           `;
           amtDiv.appendChild(qabdInput);
+          qabdInput.querySelector('input').addEventListener('input', updateTotalQabd);
+
         }
 
         if (isFull && qabdInput) {
