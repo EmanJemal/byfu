@@ -10,7 +10,7 @@
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="../common/common.js"></script>
+  <script src="../common/commo.js"></script>
 </head>
 <body>
 
@@ -66,12 +66,13 @@
           <h1>Add User</h1>
         </div>
       `;
-      const addProduct = document.createElement("div");
-      addProduct.className = "user";
+      const addProduct = document.createElement("a");
       addProduct.href = "../New-Product/new-product.html";
       addProduct.innerHTML = `
+      <div class="user">
         <i class="fa-solid fa-plus"></i>
         <h1>Add Product</h1>
+      </div>
       `;
       usersContainer.appendChild(addUser);
       usersContainer.appendChild(addProduct);
