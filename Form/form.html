@@ -270,6 +270,7 @@
       const fullSet = document.getElementById('fullSet').checked;
       const nameofseller = document.getElementById('sifan_or_samhar').value.trim();
       const cash = parseFloat(document.getElementById('cashAmount').value) || 0;
+      const overallQabd = parseFloat(document.getElementById('overallQabd').value) || 0;
       const mobilebankamt = parseFloat(document.getElementById('mobile-bank-amt').value) || 0;
 
       let date;
@@ -299,7 +300,6 @@
         choice: p.choice,
         qty: document.querySelector(`[name=productQty${i}]`).value,
         price: document.querySelector(`[name=productAmt${i}]`).value,
-        qabd: document.querySelector(`[name=productQabd${i}]`)?.value || null
       }));
 
       const purchaseData = {
@@ -314,7 +314,8 @@
         mobilebankamt,
         products, 
         dube,
-        cash
+        cash,
+        overallQabd
       };
 
       db.ref('purchases').push(purchaseData)

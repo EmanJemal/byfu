@@ -80,7 +80,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 
   if (!purchase || new Date(purchase.date).getTime() < purchaseStartTime) return;
 
-  const { customerName, date, screenshotIds = [], products = [], dube, nameofseller, mobilebankamt  } = purchase;
+  const { customerName, date, screenshotIds = [], products = [], dube, nameofseller, mobilebankamt, overallQabd  } = purchase;
 
   for (let admin of adminChats) {
     const chatId = admin.id;
@@ -101,9 +101,9 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       await productRef.update({ [location]: newAmount });
 
       // Notify admin
-      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n 🔢ብዛት: *${qty}*\n 💰Total ዱቤ: *${dube || 0}*\n 💰አጠቃላይ ዋጋ: *${p.price}* Birr \n 👤ሻጭ: ${nameofseller} \n 📲በ Mobile Bank የገባ: ${mobilebankamt} ብር`;
-      if (p.qabd) caption += `\n💵 Qabd: *${p.qabd}* Birr`;
-      caption += `\n📉 Remaining in ${p.choice}: *${newAmount}*`;
+      let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n ስም: *${customerName}*\n የእቃ ስም: *${p.name}* (${p.choice})\n ብዛት: *${qty}*\n አጠቃላይ ዱቤ: *${dube || 0}*\n አጠቃላይ ዋጋ: *${p.price}* Birr \n የሻጭ ስም: ${nameofseller} \n በ Mobile Bank የገባ: ${mobilebankamt} ብር`;
+      if (overallQabd) caption += `\n💵 Qabd: *${overallQabd}* Birr`;
+      caption += `\n ${p.choice} የቀር : *${newAmount}*`;
       caption += `\n📅 ${new Date(date).toLocaleString()}`;
 
       const photo = (product.image?.startsWith('AgA') ? product.image : null);
