@@ -184,9 +184,11 @@ app.post('/send-code', async (req, res) => {
 });
 
 // ─── Verify Code Endpoint ──────────────────────────────────────
+// ─── Verify Code Endpoint ──────────────────────────────────────
 app.post('/verify-code', async (req, res) => {
   const { botCode, verificationCode } = req.body;
   console.log("🔍 Verifying code for botCode:", botCode);
+  console.log("🔢 Code entered by user:", verificationCode);
 
   if (!botCode || !verificationCode) {
     return res.status(400).json({ success: false, message: 'Missing botCode or verificationCode.' });
@@ -197,18 +199,27 @@ app.post('/verify-code', async (req, res) => {
     const data = snapshot.val();
 
     if (!data || !data.codes) {
-      return res.json({ success: false, message: 'No codes found for this bot code' });
+      console.warn("⚠️ No codes found in DB for this botCode.");
+      return res.json({ 
+        success: false, 
+        message: 'No codes found for this bot code',
+        debug: { botCode, data }  // helpful for frontend debugging
+      });
     }
+
+    console.log("📦 Codes stored in DB:", data.codes);
 
     const isValid = data.codes.includes(verificationCode);
     console.log(`🔐 Code verification result: ${isValid}`);
+
     res.json({ success: isValid });
 
   } catch (err) {
     console.error('❌ Error in /verify-code:', err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 });
+
 
 // ─── Telegram Image Proxy Endpoint ─────────────────────────────
 app.get('/telegram-image/:fileId', async (req, res) => {
