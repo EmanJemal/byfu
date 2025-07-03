@@ -148,34 +148,34 @@ app.post('/send-code', async (req, res) => {
   const { botCode, adminName } = req.body;
   console.log("📩 Received /send-code request for botCode:", botCode);
 
-  if (!botCode) {
-    return res.status(400).json({ success: false, error: 'Bot code missing.' });
+  if (!botCode || !adminName) {
+    return res.status(400).json({ success: false, error: 'Missing botCode or adminName.' });
   }
 
   try {
-    if (!botCode || !adminName) {
-      return res.status(400).json({ success: false, error: 'Missing botCode or adminName.' });
-    }
-    
     let targetList;
     if (adminName === "Sifan") targetList = sifan;
     else if (adminName === "Amana") targetList = amana;
     else if (adminName === "Arafat") targetList = arafat;
     else return res.status(400).json({ success: false, error: 'Invalid admin selected.' });
-    
+
+    // 🧹 Clear old codes for this botCode
+    await db.ref(`verification_codes/${botCode}`).remove();
+
+    // ✅ Generate and send new codes
     for (let admin of targetList) {
       admin.code = Math.floor(100000 + Math.random() * 900000).toString();
       await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
     }
-    
+
+    // ✅ Store only new code
     await db.ref(`verification_codes/${botCode}`).set({
       codes: targetList.map(a => a.code),
       sentAt: Date.now()
     });
-    
-    res.json({ success: true });
 
-    console.log("✅ Codes stored in DB and sent to admins.");
+    console.log("✅ Sent & stored new code for", botCode);
+    res.json({ success: true });
 
   } catch (err) {
     console.error("❌ Error in /send-code:", err);
@@ -183,7 +183,7 @@ app.post('/send-code', async (req, res) => {
   }
 });
 
-// ─── Verify Code Endpoint ──────────────────────────────────────
+
 // ─── Verify Code Endpoint ──────────────────────────────────────
 app.post('/verify-code', async (req, res) => {
   const { botCode, verificationCode } = req.body;
