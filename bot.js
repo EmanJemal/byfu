@@ -101,7 +101,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       await productRef.update({ [location]: newAmount });
 
       // Notify admin
-      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n🔢 Qty: *${qty}*\n💰 Price: *${p.price}* Birr`;
+      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n🔢 Qty: *${qty}*\n Total ዱቤ: *${p.dube}*\n💰 Price: *${p.price}* Birr`;
       if (p.qabd) caption += `\n💵 Qabd: *${p.qabd}* Birr`;
       caption += `\n📉 Remaining in ${p.choice}: *${newAmount}*`;
       caption += `\n📅 ${new Date(date).toLocaleString()}`;

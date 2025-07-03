@@ -33,20 +33,33 @@
         <h3>Tin Number</h3>
         <input type="number" id="tinNumber" class="text-number" name="tinNumber">
       </div>
+
+      <div class="dube">
+        <h3>ዱቤ</h3>
+        <input type="number" id="dube" class="text-number" name="dube">
+      </div>
+      
   
       <div class="Full-Half-Payment">
         <h3 style="display: inline-block;">Full Payment</h3>
         <input type="checkbox" id="fullPayment" class="checkbox" checked name="fullPayment">
+        <div id="overallQabdContainer" style="display:none;">
+          <h3>Qabd (Partial Payment)</h3>
+          <input type="number" id="overallQabd" class="text-number" placeholder="Enter paid amount">
+        </div>
+        
       </div>
   
       <!-- ✅ This is where products should load -->
       <div id="productContainer"></div>
       
-      <h3 id="qabdTotalContainer" style="display:none;">
-        Total Qabd: <span id="totalQabd">0</span> Birr
+      <h3 id="expectedPaymentLabel">
+        Total Ammount: <span id="totalDisplay">0</span> Birr
       </h3>
-      <h3>Total Ammount: <span id="totalDisplay">0</span> Birr</h3>
-
+      <h3 id="paidLine" style="display:none;">
+        Total Payment Paid: <span id="paidQabd">0</span> Birr
+      </h3>
+      
       
     </div>
   
@@ -102,15 +115,27 @@
     const selectedProducts = JSON.parse(localStorage.getItem('selectedProducts') || '[]');
 
     function updateTotal() {
-    let total = 0;
-    selectedProducts.forEach((_, i) => {
-      const price = parseFloat(document.querySelector(`[name=productAmt${i}]`)?.value || 0);
-      total += isNaN(price) ? 0 : price;
-    });
-    totalDisplay.textContent = total.toLocaleString();
+  let total = 0;
+  selectedProducts.forEach((_, i) => {
+    const price = parseFloat(document.querySelector(`[name=productAmt${i}]`)?.value || 0);
+    total += isNaN(price) ? 0 : price;
+  });
 
-    updateTotalQabd(); // 👈 Add this
+  const isFull = document.getElementById('fullPayment').checked;
+  const totalLabel = document.getElementById('expectedPaymentLabel');
+  const totalDisplay = document.getElementById('totalDisplay');
+
+  totalDisplay.textContent = total.toLocaleString();
+  totalLabel.childNodes[0].textContent = isFull ? "Total Ammount: " : "Expected Payment: ";
+
+  // Update qabd line
+  const qabdInput = document.getElementById('overallQabd');
+  const paidSpan = document.getElementById('paidQabd');
+  if (qabdInput && paidSpan) {
+    const qabdValue = parseFloat(qabdInput.value) || 0;
+    paidSpan.textContent = qabdValue.toLocaleString();
   }
+}
 
 
     function updateTotalQabd() {
@@ -214,6 +239,7 @@
       const customerName = document.getElementById('customerName').value.trim();
       const tinNumber = document.getElementById('tinNumber').value.trim();
       const fullPayment = document.getElementById('fullPayment').checked;
+      const dube = document.getElementById('dube').value.trim();
       const mobileBank = document.getElementById('mobileBank').checked;
       const fullSet = document.getElementById('fullSet').checked;
       const nameofseller = document.getElementById('sifan_or_samhar').value.trim();
@@ -228,6 +254,7 @@
         name: p.name,
         code: p.code,
         choice: p.choice,
+        dube: p.dube,
         qty: document.querySelector(`[name=productQty${i}]`).value,
         price: document.querySelector(`[name=productAmt${i}]`).value,
         qabd: document.querySelector(`[name=productQabd${i}]`)?.value || null
@@ -242,7 +269,8 @@
         screenshotIds,
         nameofseller,
         date,
-        products
+        products, 
+        dube
       };
 
       db.ref('purchases').push(purchaseData)
@@ -277,35 +305,37 @@
         });
     });
 
+   
+    // Update the total paid below expected payment
+    const expectedPaymentLabel = document.getElementById('expectedPaymentLabel');
+    expectedPaymentLabel.innerHTML = 'Expected Payment: <span id="totalDisplay">0</span> Birr';
+
+
+    // Listen to qabd input change
+    document.addEventListener('input', () => {
+      const qabdInput = document.getElementById('overallQabd');
+      const paidSpan = document.getElementById('paidQabd');
+      if (qabdInput && paidSpan) {
+        const value = parseFloat(qabdInput.value) || 0;
+        paidSpan.textContent = value.toLocaleString();
+      }
+    });
+
+
     // ─── Qabd (Partial Payment) Handling ─────────────────
     document.getElementById('fullPayment').addEventListener('change', () => {
-      const isFull = document.getElementById('fullPayment').checked;
+  const isFull = document.getElementById('fullPayment').checked;
 
-      selectedProducts.forEach((_, i) => {
-        const amtDiv = document.querySelectorAll('.amt')[i];
-        const label = amtDiv.querySelector('h3');
-        if (label) {
-          label.textContent = isFull ? "Amount In Birr" : "Left to Pay";
-        }
+  // Show/hide the new overall qabd input
+  document.getElementById('overallQabdContainer').style.display = isFull ? 'none' : 'block';
+  document.getElementById('paidLine').style.display = isFull ? 'none' : 'block';
 
-        let qabdInput = amtDiv.querySelector('.qabd-container');
-        if (!isFull && !qabdInput) {
-          qabdInput = document.createElement('div');
-          qabdInput.classList.add('qabd-container');
-          qabdInput.innerHTML = `
-            <h3>Qabd</h3>
-            <input type="number" class="text-number" name="productQabd${i}" placeholder="Paid Amount">
-          `;
-          amtDiv.appendChild(qabdInput);
-          qabdInput.querySelector('input').addEventListener('input', updateTotalQabd);
+  // Update the label for expected payment
+  const totalLabel = document.getElementById('expectedPaymentLabel');
+  totalLabel.childNodes[0].textContent = isFull ? "Total Ammount: " : "Expected Payment: ";
 
-        }
-
-        if (isFull && qabdInput) {
-          qabdInput.remove();
-        }
-      });
-    });
+  // No need to touch product-level qabd fields anymore
+});
   </script>
 </body>
 </html>
