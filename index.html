@@ -59,40 +59,40 @@
     const expectedKey = "8799000055468";
   const currentKey = localStorage.getItem("deviceKey");
 
-  
   document.querySelector(".form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const botCode = document.getElementById("bot-code").value.trim();
-    const verificationCode = document.getElementById("verification-code").value.trim();
+  const botCode = document.getElementById("bot-code").value.trim();
+  const verificationCode = document.getElementById("verification-code").value.trim();
 
-    if (!botCode || !verificationCode) {
-      alert("Please enter both bot and verification code.");
-      return;
+  if (!botCode || !verificationCode) {
+    alert("Please enter both bot and verification code.");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://byfu-production-fe07.up.railway.app/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botCode, verificationCode }) // ✅ sent to /verify-code
+    });
+
+    const data = await res.json();
+    console.log("🧪 Verification result:", data);
+
+    if (data.success) {
+      localStorage.setItem("sessionStart", Date.now());
+      window.location.href = "user_page/user_page.html";
+    } else {
+      alert("❌ Invalid verification code.");
     }
 
-    try {
-      const res = await fetch("https://byfu-production-fe07.up.railway.app/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ botCode, verificationCode })
-      });
+  } catch (err) {
+    console.error("⚠️ Error verifying code:", err);
+    alert("An error occurred while verifying the code.");
+  }
+});
 
-      const data = await res.json();
-
-      if (data.success) {
-        // ✅ Redirect to your page
-        localStorage.setItem("sessionStart", Date.now());
-        window.location.href = "user_page/user_page.html"; // <-- change to your desired page
-      } else {
-        alert("❌ Invalid verification code.");
-      }
-
-    } catch (err) {
-      console.error("⚠️ Error verifying code:", err);
-      alert("An error occurred while verifying the code.");
-    }
-  });
   document.querySelector(".action-btn").addEventListener("click", async () => {
   const botCode = document.getElementById("bot-code").value.trim();
 
