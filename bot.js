@@ -176,7 +176,6 @@ app.post('/send-code', async (req, res) => {
     res.json({ success: true });
 
     console.log("✅ Codes stored in DB and sent to admins.");
-    res.json({ success: true });
 
   } catch (err) {
     console.error("❌ Error in /send-code:", err);
