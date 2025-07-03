@@ -20,10 +20,10 @@ const sifan = [
   { id: process.env.ADMIN_3_CHAT_ID, code: '' }
 ];
 const amana = [
-  { id: process.env.ADMIN_1_CHAT_ID, code: '' }
+  { id: process.env.ADMIN_2_CHAT_ID, code: '' }
 ];
 const arafat = [
-  { id: process.env.ADMIN_2_CHAT_ID, code: '' }
+  { id: process.env.ADMIN_1_CHAT_ID, code: '' }
 ];
 
 // ─── CORS Setup ────────────────────────────────────────────────
