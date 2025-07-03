@@ -80,7 +80,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 
   if (!purchase || new Date(purchase.date).getTime() < purchaseStartTime) return;
 
-  const { customerName, date, screenshotIds = [], products = [] } = purchase;
+  const { customerName, date, screenshotIds = [], products = [], dube } = purchase;
 
   for (let admin of adminChats) {
     const chatId = admin.id;
