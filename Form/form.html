@@ -87,7 +87,7 @@
 
       <div class="bot-code">
         <h3>sifan_or_samhar</h3>
-        <input type="number" id="sifan_or_samhar" class="text-number" name="sifan_or_samhar" placeholder="sifan_or_samhar">
+        <input type="text" id="sifan_or_samhar" class="text-number" name="sifan_or_samhar" placeholder="sifan_or_samhar">
         <button type="submit" class="submit-btn">Submit</button>
       </div>
     </div>
@@ -254,7 +254,6 @@
         name: p.name,
         code: p.code,
         choice: p.choice,
-        dube: p.dube,
         qty: document.querySelector(`[name=productQty${i}]`).value,
         price: document.querySelector(`[name=productAmt${i}]`).value,
         qabd: document.querySelector(`[name=productQabd${i}]`)?.value || null
