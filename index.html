@@ -28,10 +28,11 @@
       
         <!-- ✅ Checkboxes inserted here -->
         <div style="margin: 10px 0;">
-          <label><input type="checkbox" id="Sifan" />Sifan</label><br>
-          <label><input type="checkbox" id="Amana" />Amana</label><br>
-          <label><input type="checkbox" id="Arafat" />Arafat</label>
+          <label><input type="radio" name="admin" value="Sifan" id="Sifan" /> Sifan</label><br>
+          <label><input type="radio" name="admin" value="Amana" id="Amana" /> Amana</label><br>
+          <label><input type="radio" name="admin" value="Arafat" id="Arafat" /> Arafat</label>
         </div>
+        
         <!-- ✅ End checkboxes -->
       
         <button type="button" class="action-btn">
@@ -93,35 +94,44 @@
     }
   });
   document.querySelector(".action-btn").addEventListener("click", async () => {
-    const botCode = document.getElementById("bot-code").value.trim();
+  const botCode = document.getElementById("bot-code").value.trim();
 
-    if (!botCode || botCode !== "8211") {
-      alert("Please enter the bot code or Only authorized bot code is accepted.");
-      return;
+  if (!botCode || botCode !== "8211") {
+    alert("Please enter the bot code or Only authorized bot code is accepted.");
+    return;
+  }
+
+  // Get selected admin radio button BEFORE fetch
+  const selectedAdmin = document.querySelector('input[name="admin"]:checked');
+  if (!selectedAdmin) {
+    alert("Please select one admin.");
+    return;
+  }
+  const adminName = selectedAdmin.value;
+
+  try {
+    const res = await fetch("https://byfu-production-fe07.up.railway.app/send-code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ botCode, adminName })  // <-- here the body with adminName
+    });
+
+    const data = await res.json();
+    console.log("🔁 Response from /send-code:", data);
+
+    if (data.success) {
+      alert("✅ Verification codes sent to selected admin.");
+    } else {
+      alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
     }
+  } catch (err) {
+    console.error("⚠️ Error sending code:", err);
+    alert("An error occurred while sending the code.");
+  }
+});
 
-    try {
-      const res = await fetch("https://byfu-production-fe07.up.railway.app/send-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ botCode })
-      });
-
-      const data = await res.json();
-      console.log("🔁 Response from /send-code:", data);
-
-      if (data.success) {
-        alert("✅ Verification codes sent to admins.");
-      } else {
-        alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("⚠️ Error sending code:", err);
-      alert("An error occurred while sending the code.");
-    }
-  });
 </script>
 
 </body>

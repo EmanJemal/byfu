@@ -145,7 +145,7 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 
 // ─── Send Code Endpoint ────────────────────────────────────────
 app.post('/send-code', async (req, res) => {
-  const { botCode } = req.body;
+  const { botCode, adminName } = req.body;
   console.log("📩 Received /send-code request for botCode:", botCode);
 
   if (!botCode) {
@@ -153,16 +153,27 @@ app.post('/send-code', async (req, res) => {
   }
 
   try {
-    for (let admin of adminChats) {
+    if (!botCode || !adminName) {
+      return res.status(400).json({ success: false, error: 'Missing botCode or adminName.' });
+    }
+    
+    let targetList;
+    if (adminName === "Sifan") targetList = sifan;
+    else if (adminName === "Amana") targetList = amana;
+    else if (adminName === "Arafat") targetList = arafat;
+    else return res.status(400).json({ success: false, error: 'Invalid admin selected.' });
+    
+    for (let admin of targetList) {
       admin.code = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log(`📨 Sending code ${admin.code} to admin ${admin.id}`);
       await bot.sendMessage(admin.id, `🔐 Login Attempt\nBot Code: ${botCode}\nYour Verification Code: ${admin.code}`);
     }
-
+    
     await db.ref(`verification_codes/${botCode}`).set({
-      codes: adminChats.map(a => a.code),
+      codes: targetList.map(a => a.code),
       sentAt: Date.now()
     });
+    
+    res.json({ success: true });
 
     console.log("✅ Codes stored in DB and sent to admins.");
     res.json({ success: true });
