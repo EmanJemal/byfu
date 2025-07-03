@@ -101,12 +101,12 @@
     return;
   }
 
-  // Get selected admin radio button BEFORE fetch
   const selectedAdmin = document.querySelector('input[name="admin"]:checked');
   if (!selectedAdmin) {
     alert("Please select one admin.");
     return;
   }
+
   const adminName = selectedAdmin.value;
 
   try {
@@ -115,14 +115,14 @@
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ botCode, adminName })  // <-- here the body with adminName
+      body: JSON.stringify({ botCode, adminName }) // ✅ No verificationCode here!
     });
 
     const data = await res.json();
     console.log("🔁 Response from /send-code:", data);
 
     if (data.success) {
-      alert("✅ Verification codes sent to selected admin.");
+      alert("✅ Verification code sent to selected admin.");
     } else {
       alert("❌ Failed to send codes: " + (data.error || "Unknown error"));
     }
@@ -131,6 +131,7 @@
     alert("An error occurred while sending the code.");
   }
 });
+
 
 </script>
 
