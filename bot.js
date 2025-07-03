@@ -16,10 +16,19 @@ const adminChats = [
   { id: process.env.ADMIN_2_CHAT_ID, code: '' },
   { id: process.env.ADMIN_3_CHAT_ID, code: '' }
 ];
+const sifan = [
+  { id: process.env.ADMIN_3_CHAT_ID, code: '' }
+];
+const amana = [
+  { id: process.env.ADMIN_1_CHAT_ID, code: '' }
+];
+const arafat = [
+  { id: process.env.ADMIN_2_CHAT_ID, code: '' }
+];
 
 // ─── CORS Setup ────────────────────────────────────────────────
 const allowedOrigins = [
-  'https://byd-kappa.vercel.app', // ✅ Add this line
+  'https://byd-kappa.vercel.app', 
   'http://127.0.0.1:5500',
   'http://localhost:5500',
   'http://localhost:3000',

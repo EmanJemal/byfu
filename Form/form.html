@@ -73,10 +73,9 @@
       </div>
 
       <div class="bot-code">
-        <h3>Bot Code</h3>
-        <input type="number" id="botCode" class="text-number" name="botCode">
-        <button type="button" id="sendCode" class="action-btn"><i class="fa-brands fa-telegram"></i>Send Code</button>
-        <button type="submit" class="submit-btn">Log In</button>
+        <h3>sifan_or_samhar</h3>
+        <input type="number" id="sifan_or_samhar" class="text-number" name="sifan_or_samhar" placeholder="sifan_or_samhar">
+        <button type="submit" class="submit-btn">Submit</button>
       </div>
     </div>
   
@@ -217,7 +216,7 @@
       const fullPayment = document.getElementById('fullPayment').checked;
       const mobileBank = document.getElementById('mobileBank').checked;
       const fullSet = document.getElementById('fullSet').checked;
-      const botCode = document.getElementById('botCode').value.trim();
+      const nameofseller = document.getElementById('sifan_or_samhar').value.trim();
       const date = new Date().toISOString();
 
       const screenshotIds = [...document.querySelectorAll('.screenshot-id')]
@@ -241,7 +240,7 @@
         mobileBank,
         fullSet,
         screenshotIds,
-        botCode,
+        nameofseller,
         date,
         products
       };

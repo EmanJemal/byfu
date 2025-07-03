@@ -45,7 +45,7 @@
         .products-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 100px;
         }
 
         .product-item {
@@ -88,7 +88,9 @@
         min-width: 100px;
         text-align: center;
         }
-
+        .product-image{
+          height: auto;
+        }
         .actions {
         display: flex;
         gap: 15px;
@@ -147,64 +149,91 @@
 
 
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+      storageBucket: "byd-furniture-36585.appspot.com",
+      messagingSenderId: "133527815399",
+      appId: "1:133527815399:web:8ef671206d0478824ece42"
+    };
+  
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
     const data = JSON.parse(localStorage.getItem("selectedPurchase"));
+  
     if (!data) {
       document.body.innerHTML += "<h2>No client data found</h2>";
     } else {
-      const container = document.createElement("div");
-      container.style.padding = "20px";
-      
+      db.ref("products").once("value").then(snapshot => {
+        const allProducts = snapshot.val() || {};
+        const codeToImage = {};
   
-      container.innerHTML = `
-        <section class="client-info card">
-            <h1>Client Information</h1>
-            <p><strong>Name:</strong> ${data.customerName}</p>
-            <p><strong>Tin Number:</strong> ${data.tinNumber || "N/A"}</p>
-            <p><strong>Full Payment:</strong> ${data.fullPayment ? "Yes" : "No"}</p>
-            <p><strong>Mobile Bank:</strong> ${data.mobileBank ? "Yes" : "No"}</p>
-            <p><strong>Full Set:</strong> ${data.fullSet ? "Yes" : "No"}</p>
-            <p><strong>Bot Code:</strong> ${data.botCode || "N/A"}</p>
-            <p><strong>Date:</strong> ${new Date(data.date).toLocaleString()}</p>
-        </section>
-
-        <section class="products card">
+        // Build a map from product code → image
+        Object.values(allProducts).forEach(prod => {
+          if (prod.code && prod.image) {
+            codeToImage[prod.code] = prod.image;
+          }
+        });
+  
+        const container = document.createElement("div");
+        container.style.padding = "20px";
+  
+        container.innerHTML = `
+          <section class="client-info card">
+              <h1>Client Information</h1>
+              <p><strong>Name:</strong> ${data.customerName}</p>
+              <p><strong>Tin Number:</strong> ${data.tinNumber || "N/A"}</p>
+              <p><strong>Full Payment:</strong> ${data.fullPayment ? "Yes" : "No"}</p>
+              <p><strong>Mobile Bank:</strong> ${data.mobileBank ? "Yes" : "No"}</p>
+              <p><strong>Full Set:</strong> ${data.fullSet ? "Yes" : "No"}</p>
+              <p><strong>Dealer Name:</strong> ${data.nameofseller || "N/A"}</p>
+              <p><strong>Date:</strong> ${new Date(data.date).toLocaleString()}</p>
+          </section>
+  
+          <section class="products card">
             <h2>Purchased Products</h2>
             <div class="products-list">
-            ${data.products.map(p => `
-                <div class="product-item">
-                <img src="${p.image || '../products/placeholder.jpg'}" alt="${p.name}" class="product-image" />
-                <div class="product-details">
-                    <h3>${p.name} <span class="choice">(${p.choice})</span></h3>
-                    <p><strong>Quantity:</strong> ${p.qty}</p>
-                    <p><strong>Price:</strong> ${p.price} Birr</p>
-                    ${p.qabd ? `<p><strong>Qabd (Paid):</strong> ${p.qabd} Birr</p>` : ''}
-                </div>
-                </div>
-            `).join('')}
+              ${data.products.map(p => {
+                const imageId = codeToImage[p.code];
+                const imageUrl = imageId ? `https://byfu-production-fe07.up.railway.app/telegram-image/${imageId}` : '../products/placeholder.jpg';
+  
+                return `
+                  <div class="product-item">
+                    <img src="${imageUrl}" alt="${p.name}" class="product-image" style="max-width: 100%; border-radius: 8px;" />
+                    <div class="product-details">
+                      <h3>${p.name} <span class="choice">(${p.choice})</span></h3>
+                      <p><strong>Quantity:</strong> ${p.qty}</p>
+                      <p><strong>Price:</strong> ${p.price} Birr</p>
+                      ${p.qabd ? `<p><strong>Qabd (Paid):</strong> ${p.qabd} Birr</p>` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
-        </section>
-
-        <section class="screenshots card">
+          </section>
+  
+          <section class="screenshots card">
             <h2>Payment Screenshots</h2>
             <div class="screenshots-list">
-            ${(data.screenshotIds || []).map(id => `
+              ${(data.screenshotIds || []).map(id => `
                 <div class="screenshot-id">${id}</div>
-            `).join('')}
+              `).join('')}
             </div>
-        </section>
-
-        <section class="actions card">
+          </section>
+  
+          <section class="actions card">
             <button class="btn delete-btn">Delete Purchase</button>
             <button class="btn edit-btn">Edit Payment</button>
-        </section>
+          </section>
         `;
-
   
-      document.body.appendChild(container);
+        document.body.appendChild(container);
+      });
     }
-
-    localStorage.removeItem("selectedPurchase");
-
+  
+    // localStorage.removeItem("selectedPurchase");
   </script>
   
 </body>
