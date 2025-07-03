@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
   <script src="../common/common.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/etcalendar@1.0.3/dist/etcalendar.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/etcalendar@1.0.3/dist/etcalendar.min.css">
 </head>
 <body>
 
@@ -75,6 +77,31 @@
         <input type="checkbox" id="fullSet" class="checkbox" name="fullSet">
       </div>
   
+      <div class="custom-date">
+        <h3 style="display: inline-block;">Today</h3>
+        <input type="checkbox" id="todayCheck" class="checkbox" checked>
+        
+        <div id="datePickerWrapper" style="display:none; margin-top: 10px;">
+          <label for="customDate">Select Date:</label>
+          <input type="text" id="customDate" placeholder="yyyy-mm-dd" class="text-number">
+        </div>
+      </div>
+
+      <div class="cash-amt">
+        <h3>Cash</h3>
+        <div id="cash-amt">
+          <input type="number" class="text-number cash-amt" placeholder="በ Cash ስንት ብር ገባ" id="cashAmount" />
+        </div>
+      </div>
+
+      <div class="mobile-bank-amt">
+        <h3>Mobile Bank Amount</h3>
+        <div id="mobile-bank-amt">
+          <input type="number" class="text-number mobile-bank-amt" placeholder="በ Mobile Bank ስንት ብር ገባ" id="mobile-bank-amt" />
+        </div>
+      </div>
+
+
       <div class="Payment-screenshot">
         <h3>Payment Screenshot IDs</h3>
         <div id="screenshotInputs">
@@ -82,7 +109,6 @@
         </div>
         <button type="button" id="addScreenshotId" class="action-btn">➕ Add Screenshot ID</button>
         <div id="screenshotPreview" style="margin-top: 10px;"></div>
-
       </div>
 
       <div class="bot-code">
@@ -243,7 +269,24 @@
       const mobileBank = document.getElementById('mobileBank').checked;
       const fullSet = document.getElementById('fullSet').checked;
       const nameofseller = document.getElementById('sifan_or_samhar').value.trim();
-      const date = new Date().toISOString();
+      const cash = parseFloat(document.getElementById('cashAmount').value) || 0;
+      const mobilebankamt = parseFloat(document.getElementById('mobile-bank-amt').value) || 0;
+
+      let date;
+      if (document.getElementById("todayCheck").checked) {
+        date = new Date().toISOString(); // ISO format: 2025-07-03T...
+      } else {
+        const etDateStr = document.getElementById("customDate").value; // e.g. "2017-11-26"
+        if (etDateStr) {
+          const [ethYear, ethMonth, ethDay] = etDateStr.split("-").map(Number);
+          const greg = EtCalendar.toGregorian(ethYear, ethMonth, ethDay); // { year, month, day }
+          date = `${greg.year}-${String(greg.month).padStart(2, '0')}-${String(greg.day).padStart(2, '0')}`;
+        } else {
+          date = new Date().toISOString(); // fallback if no input
+        }
+      }
+
+
 
       const screenshotIds = [...document.querySelectorAll('.screenshot-id')]
         .map(input => input.value.trim())
@@ -268,8 +311,10 @@
         screenshotIds,
         nameofseller,
         date,
+        mobilebankamt,
         products, 
-        dube
+        dube,
+        cash
       };
 
       db.ref('purchases').push(purchaseData)
@@ -333,8 +378,24 @@
   const totalLabel = document.getElementById('expectedPaymentLabel');
   totalLabel.childNodes[0].textContent = isFull ? "Total Ammount: " : "Expected Payment: ";
 
-  // No need to touch product-level qabd fields anymore
 });
+
+    const todayCheck = document.getElementById("todayCheck");
+    const datePickerWrapper = document.getElementById("datePickerWrapper");
+    const customDateInput = document.getElementById("customDate");
+
+    // Toggle Ethiopian date picker
+    todayCheck.addEventListener("change", () => {
+      datePickerWrapper.style.display = todayCheck.checked ? "none" : "block";
+    });
+
+    // Initialize Ethiopian calendar
+    EtCalendar.init({
+      target: "#customDate",
+      type: "Ethiopian", // Or "Gregorian"
+      format: "yyyy-MM-dd"
+    });
+
   </script>
 </body>
 </html>

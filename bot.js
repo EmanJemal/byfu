@@ -80,7 +80,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 
   if (!purchase || new Date(purchase.date).getTime() < purchaseStartTime) return;
 
-  const { customerName, date, screenshotIds = [], products = [], dube } = purchase;
+  const { customerName, date, screenshotIds = [], products = [], dube, nameofseller,  } = purchase;
 
   for (let admin of adminChats) {
     const chatId = admin.id;
@@ -101,7 +101,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       await productRef.update({ [location]: newAmount });
 
       // Notify admin
-      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n🔢 Qty: *${qty}*\n Total ዱቤ: *${dube}*\n💰 Price: *${p.price}* Birr`;
+      let caption = `🛒 *New Sale*\n👤 *${customerName}*\n📦 *${p.name}* (${p.choice})\n 🔢ብዛት: *${qty}*\n 💰Total ዱቤ: *${dube || 0}*\n 💰አጠቃላይ ዋጋ: *${p.price}* Birr \n 👤ሻጭ: ${nameofseller} \n 📲በ Mobile Bank የገባ: ${mobilebankamt} ብር`;
       if (p.qabd) caption += `\n💵 Qabd: *${p.qabd}* Birr`;
       caption += `\n📉 Remaining in ${p.choice}: *${newAmount}*`;
       caption += `\n📅 ${new Date(date).toLocaleString()}`;
