@@ -9,7 +9,7 @@
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="../common/commo.js"></script>
+  <script src="../common/common.js"></script>
   <style>
     body {
   font-family: 'Poppins', sans-serif;
@@ -125,6 +125,29 @@
         .edit-btn:hover {
         background-color: #2b6cb0;
         }
+        .screenshots-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          justify-content: flex-start;
+          align-items: flex-start;
+        }
+
+        .screenshots-list img {
+          width: 300%;
+          max-width: 800px;
+          height: auto;
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          object-fit: contain;
+          transition: transform 0.2s ease-in-out;
+        }
+
+        .screenshots-list img:hover {
+          transform: scale(5);
+          cursor: zoom-in;
+        }
+
 
         @media (max-width: 600px) {
         .products-list {
@@ -185,6 +208,9 @@
               <h1>Client Information</h1>
               <p><strong>Name:</strong> ${data.customerName}</p>
               <p><strong>Tin Number:</strong> ${data.tinNumber || "N/A"}</p>
+              <p><strong>Cash:</strong> ${data.cash || "0"}</p>
+              <p><strong>dube:</strong> ${data.dube || "0"}</p>
+              <p><strong>Qabd:</strong> ${data.overallQabd || "0"}</p>
               <p><strong>Full Payment:</strong> ${data.fullPayment ? "Yes" : "No"}</p>
               <p><strong>Mobile Bank:</strong> ${data.mobileBank ? "Yes" : "No"}</p>
               <p><strong>Full Set:</strong> ${data.fullSet ? "Yes" : "No"}</p>
@@ -214,14 +240,15 @@
             </div>
           </section>
   
-          <section class="screenshots card">
-            <h2>Payment Screenshots</h2>
-            <div class="screenshots-list">
-              ${(data.screenshotIds || []).map(id => `
-                <div class="screenshot-id">${id}</div>
-              `).join('')}
-            </div>
-          </section>
+        <section class="screenshots card">
+          <h2>Payment Screenshots</h2>
+          <div class="screenshots-list">
+            <p>Loading screenshots...</p>
+          </div>
+        </section>
+
+
+
   
           <section class="actions card">
             <button class="btn delete-btn">Delete Purchase</button>
@@ -229,7 +256,39 @@
           </section>
         `;
   
+        
         document.body.appendChild(container);
+        document.body.appendChild(container);
+
+        const screenshotIds = data.screenshotIds || [];
+        const screenshotsList = container.querySelector(".screenshots-list");
+        screenshotsList.innerHTML = ""; // Clear static HTML if any
+
+        screenshotIds.forEach(id => {
+          db.ref(`Screenshot_id/${id}/image`).once("value").then(snap => {
+            const imageId = snap.val();
+            const img = document.createElement("img");
+
+            if (imageId) {
+              img.src = `https://byfu-production-fe07.up.railway.app/telegram-image/${imageId}`;
+            } else {
+              img.src = "../products/placeholder.jpg";
+            }
+
+            img.alt = `Screenshot ${id}`;
+            img.style.maxWidth = "200px";
+            img.style.borderRadius = "8px";
+            img.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+            img.title = id;
+
+            screenshotsList.appendChild(img);
+          }).catch(error => {
+            console.error("Error loading screenshot image:", id, error);
+          });
+        });
+
+ 
+        
       });
     }
   
