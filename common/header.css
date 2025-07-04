@@ -29,3 +29,25 @@
     width: 180px;
     margin: 0 auto;
   }
+
+
+/*button*/
+.action-btn-log-out{
+  background-color: #d91717;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.3s ease;
+}
+.action-btn-log-out{
+  width: 50%;
+  margin-left: 80px;
+}
+
+.action-btn-log-out:hover{
+  background-color: #980e0e;
+}
