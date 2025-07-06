@@ -24,6 +24,11 @@
     <!-- Dynamic users will be inserted here -->
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script> <!-- ADD THIS LINE -->
+
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
@@ -36,6 +41,15 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+        firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("✅ Anonymous login successful");
+      })
+      .catch((error) => {
+        console.error("❌ Anonymous login failed:", error);
+      });
+
     const usersContainer = document.getElementById("usersContainer");
 
     function createUserBox(name, product, fullPayment, purchaseData) {
@@ -95,8 +109,10 @@
   usersContainer.appendChild(div);
 }
 
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) return;
 
-    db.ref("purchases").once("value").then(snapshot => {
+  db.ref("purchases").once("value").then(snapshot => {
       const data = snapshot.val();
       if (!data) return createAddButtons();
 
@@ -119,7 +135,10 @@
 
       createAddButtons();
     });
-  </script>
+
+}
+);
+    </script>
 
 </body>
 </html>
