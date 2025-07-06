@@ -24,6 +24,7 @@
 
   <div class="products"></div>
 
+  
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
@@ -35,39 +36,90 @@
       appId: "1:133527815399:web:8ef671206d0478824ece42",
       measurementId: "G-FLTWX2E8WX"
     };
+  
+    const codeTypes = {
+      '00': '🛋️ List of Sofas',
+      '02': '🍽️ List of Dining Tables',
+      '03': '🪑 List of Chairs',
+      '04': '🪞 List of Center Tables',
+      '05': '🛏️ List of Beds',
+      '06': '🚗 List of Gari',
+      '07': '☕ List of Coffee Tables',
+      '08': '🖼️ List of Photo Frames',
+      '09': '📚 List of Mentafs',
+      '10': '💡 List of Mabrat',
+      '20': '🛋️ List of Consoles',
+      '30': '📺 List of TV Stands',
+      '40': '🎭 List of Ababa Maskemecha',
+      '50': '🛏️ List of Ferash',
+      '60': '🛋️ List of Fur',
+      '70': '🖥 List of desks',
+      '80': '🛏️ List of Bed Side',
+      '90': '🛋️ List of Comforts',
+    };
+  
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
+  
     window.onload = function () {
       const container = document.querySelector(".products");
       db.ref("products").once("value", (snapshot) => {
         const products = snapshot.val();
         if (!products) return container.innerHTML = "<p>No products found.</p>";
-
-        Object.entries(products).forEach(([key, p]) => {
+  
+        const sortedEntries = Object.entries(products).sort((a, b) => {
+          const codeA = a[1].code?.substring(0, 2) || "99";
+          const codeB = b[1].code?.substring(0, 2) || "99";
+          return codeA.localeCompare(codeB);
+        });
+  
+        const groups = {};
+  
+        sortedEntries.forEach(([key, product]) => {
+          const codePrefix = product.code?.substring(0, 2) || "99";
+  
+          if (!groups[codePrefix]) {
+            // Create group title
+            const groupTitle = document.createElement("h2");
+            groupTitle.textContent = codeTypes[codePrefix] || `📦 Other Products (${codePrefix})`;
+            groupTitle.className = "group-title";
+            container.appendChild(groupTitle);
+  
+            // Create collapsible content container
+            const groupContainer = document.createElement("div");
+            groupContainer.className = "group-content hidden";
+            container.appendChild(groupContainer);
+  
+            // Toggle visibility
+            groupTitle.addEventListener("click", () => {
+              groupContainer.classList.toggle("hidden");
+            });
+  
+            groups[codePrefix] = groupContainer;
+          }
+  
+          const image = product.image?.startsWith("AgA")
+            ? `https://byfu-production-fe07.up.railway.app/telegram-image/${product.image}`
+            : (product.image?.startsWith("http") ? product.image : "../products/placeholder.jpg");
+  
           const div = document.createElement("div");
           div.className = "product";
-
-          const image = p.image?.startsWith("AgA")
-          ? `https://byfu-production-fe07.up.railway.app/telegram-image/${p.image}`
-          : (p.image?.startsWith("http") ? p.image : "../products/placeholder.jpg");
-
+  
           div.innerHTML = `
-            <img src="${image}" alt="${p.name}" />
-            <h1>${p.name || 'No Name'}\n${p.code}</h1>
+            <img src="${image}" alt="${product.name}" />
+            <h1>${product.name || 'No Name'}\n${product.code}</h1>
             <div class="choices">
               <div class="choice store" data-choice="store" data-id="${key}">
                 <h2>Store</h2>
-                <h2>${p.amount_store || 0} Pcs</h2>
+                <h2>${product.amount_store || 0} Pcs</h2>
               </div>
               <div class="choice suq" data-choice="suq" data-id="${key}">
                 <h2>Suq</h2>
-                <h2>${p.amount_suq || 0} Pcs</h2>
+                <h2>${product.amount_suq || 0} Pcs</h2>
               </div>
             </div>
           `;
-
-          // Allow multi-selection: just toggle
+  
           div.querySelectorAll('.choice').forEach(choiceBtn => {
             choiceBtn.addEventListener('click', (e) => {
               e.stopPropagation();
@@ -75,35 +127,33 @@
               choiceBtn.classList.toggle('selected');
             });
           });
-
-          container.appendChild(div);
+  
+          groups[codePrefix].appendChild(div);
         });
       });
     };
-
-
+  
     document.querySelector('.action-btn-sub').addEventListener('click', () => {
-  const selectedProducts = [];
-
-  document.querySelectorAll('.product').forEach(product => {
-    const selectedChoice = product.querySelector('.choice.selected');
-    if (selectedChoice) {
-      const id = selectedChoice.getAttribute('data-id');
-      const choice = selectedChoice.getAttribute('data-choice');
-      const name = product.querySelector('h1')?.textContent?.split('\n')[0] || '';
-      const code = product.querySelector('h1')?.textContent?.split('\n')[1] || '';
-      selectedProducts.push({ id, name, code, choice });
-    }
-  });
-
-  // Save to localStorage
-  localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
-
-  // Redirect
-  window.location.href = '/Form/form.html';
-});
-
+      const selectedProducts = [];
+  
+      document.querySelectorAll('.product').forEach(product => {
+        const selectedChoice = product.querySelector('.choice.selected');
+        if (selectedChoice) {
+          const id = selectedChoice.getAttribute('data-id');
+          const choice = selectedChoice.getAttribute('data-choice');
+          const name = product.querySelector('h1')?.textContent?.split('\n')[0] || '';
+          const code = product.querySelector('h1')?.textContent?.split('\n')[1] || '';
+          selectedProducts.push({ id, name, code, choice });
+        }
+      });
+  
+      localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+      window.location.href = '/Form/form.html';
+    });
   </script>
+  
+  
+  
 
 </body>
 </html>

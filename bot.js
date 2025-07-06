@@ -17,13 +17,13 @@ const adminChats = [
   { id: process.env.ADMIN_3_CHAT_ID, code: '' }
 ];
 const sifan = [
-  { id: process.env.ADMIN_3_CHAT_ID, code: '' }
+  { id: process.env.ADMIN_3_CHAT_ID, code: '' }//1133990573
 ];
 const amana = [
-  { id: process.env.ADMIN_2_CHAT_ID, code: '' }
+  { id: process.env.ADMIN_2_CHAT_ID, code: '' }//582144194
 ];
 const arafat = [
-  { id: process.env.ADMIN_1_CHAT_ID, code: '' }
+  { id: process.env.ADMIN_1_CHAT_ID, code: '' }//5169578668
 ];
 
 // ─── CORS Setup ────────────────────────────────────────────────
