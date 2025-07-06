@@ -101,15 +101,20 @@
       if (!data) return createAddButtons();
 
       // Convert to array and sort by latest
-      const purchases = Object.values(data).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const purchases = Object.entries(data)
+        .map(([key, purchase]) => {
+          purchase.key = key;
+          return purchase;
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date)); // sort newest first
 
       purchases.forEach(purchase => {
         const name = purchase.customerName || "Unknown";
         const fullPayment = purchase.fullPayment;
         const productNames = (purchase.products || []).map(p => p.name || "Unnamed Product").join(", ");
-
         createUserBox(name, productNames, fullPayment, purchase);
       });
+
 
 
       createAddButtons();

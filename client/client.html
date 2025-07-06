@@ -185,7 +185,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const data = JSON.parse(localStorage.getItem("selectedPurchase"));
-  
+    const purchaseKey = data?.key;
+
     if (!data) {
       document.body.innerHTML += "<h2>No client data found</h2>";
     } else {
@@ -281,6 +282,103 @@
             img.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
             img.title = id;
 
+            // After appending the container to the body
+            document.body.appendChild(container);
+
+            // ✅ Move your edit button logic here
+            container.querySelector(".edit-btn").addEventListener("click", (e) => {
+            const isSave = e.target.textContent === "Save Changes";
+
+            if (isSave) {
+              const updatedData = {
+                customerName: document.querySelector("input[name='customerName']").value || data.customerName,
+                tinNumber: document.querySelector("input[name='tinNumber']").value,
+                cash: document.querySelector("input[name='cash']").value,
+                dube: document.querySelector("input[name='dube']").value,
+                overallQabd: document.querySelector("input[name='qabd']").value,
+                fullPayment: document.querySelector("input[name='fullPayment']").value.toLowerCase() === "yes",
+                mobileBank: document.querySelector("input[name='mobileBank']").value.toLowerCase() === "yes",
+                fullSet: document.querySelector("input[name='fullSet']").value.toLowerCase() === "yes",
+                nameofseller: document.querySelector("input[name='dealerName']").value,
+                date: document.querySelector("input[name='date']").value || data.date,
+              };
+
+              // Add product data if checkbox is checked
+              const addProduct = document.getElementById("addProductToggle").checked;
+              if (addProduct) {
+                const newProduct = {
+                  code: document.querySelector("input[name='productCode']").value,
+                  qty: document.querySelector("input[name='productQty']").value,
+                  price: document.querySelector("input[name='productPrice']").value,
+                  choice: document.querySelector("select[name='productChoice']").value,
+                  name: "New Product" // you can customize this if needed
+                };
+                updatedData.products = [...data.products, newProduct];
+              }
+
+              // Add screenshot ID if checked
+              const addScreenshot = document.getElementById("addScreenshotToggle").checked;
+              if (addScreenshot) {
+                const screenshotId = document.querySelector("input[name='screenshotId']").value;
+                updatedData.screenshotIds = [...(data.screenshotIds || []), screenshotId];
+              }
+
+              db.ref("purchases/" + data.key).update(updatedData).then(() => {
+                alert("Purchase updated!");
+                location.reload(); // or redirect
+              }).catch((err) => {
+                console.error("Update failed", err);
+              });
+
+              return;
+            }
+
+            // Switch to edit mode
+            const clientInfoSection = container.querySelector(".client-info");
+            clientInfoSection.innerHTML = `
+              <h1>Edit Client Information</h1>
+              <label>Name: <input name="customerName" type="text" placeholder="${data.customerName}" /></label><br>
+              <label>Tin Number: <input name="tinNumber" type="text" placeholder="${data.tinNumber || ''}" /></label><br>
+              <label>Cash: <input name="cash" type="text" placeholder="${data.cash || '0'}" /></label><br>
+              <label>Dube: <input name="dube" type="text" placeholder="${data.dube || '0'}" /></label><br>
+              <label>Qabd: <input name="qabd" type="text" placeholder="${data.overallQabd || '0'}" /></label><br>
+              <label>Full Payment: <input name="fullPayment" type="text" placeholder="${data.fullPayment ? 'Yes' : 'No'}" /></label><br>
+              <label>Mobile Bank: <input name="mobileBank" type="text" placeholder="${data.mobileBank ? 'Yes' : 'No'}" /></label><br>
+              <label>Full Set: <input name="fullSet" type="text" placeholder="${data.fullSet ? 'Yes' : 'No'}" /></label><br>
+              <label>Dealer Name: <input name="dealerName" type="text" placeholder="${data.nameofseller || ''}" /></label><br>
+              <label>Date: <input name="date" type="text" placeholder="${new Date(data.date).toLocaleString()}" /></label><br>
+
+              <label><input type="checkbox" id="addProductToggle" /> Add New Product</label><br>
+              <div id="newProductFields" style="display: none;">
+                <label>Code: <input name="productCode" type="text" /></label><br>
+                <label>Quantity: <input name="productQty" type="text" /></label><br>
+                <label>Price: <input name="productPrice" type="text" /></label><br>
+                <label>Store or Suq: 
+                  <select name="productChoice">
+                    <option value="store">Store</option>
+                    <option value="suq">Suq</option>
+                  </select>
+                </label><br>
+              </div>
+
+              <label><input type="checkbox" id="addScreenshotToggle" /> Add Screenshot ID</label><br>
+              <div id="screenshotField" style="display: none;">
+                <label>Screenshot ID: <input name="screenshotId" type="text" /></label><br>
+              </div>
+            `;
+
+            document.getElementById("addProductToggle").addEventListener("change", (e) => {
+              document.getElementById("newProductFields").style.display = e.target.checked ? "block" : "none";
+            });
+
+            document.getElementById("addScreenshotToggle").addEventListener("change", (e) => {
+              document.getElementById("screenshotField").style.display = e.target.checked ? "block" : "none";
+            });
+
+            const editBtn = container.querySelector(".edit-btn");
+            editBtn.textContent = "Save Changes";
+          });
+
             screenshotsList.appendChild(img);
           }).catch(error => {
             console.error("Error loading screenshot image:", id, error);
@@ -292,7 +390,6 @@
       });
     }
   
-    // localStorage.removeItem("selectedPurchase");
   </script>
   
 </body>

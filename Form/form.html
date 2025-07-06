@@ -9,8 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
   <script src="../common/common.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/etcalendar@1.0.3/dist/etcalendar.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/etcalendar@1.0.3/dist/etcalendar.min.css">
 </head>
 <body>
 
@@ -279,9 +277,7 @@
       } else {
         const etDateStr = document.getElementById("customDate").value; // e.g. "2017-11-26"
         if (etDateStr) {
-          const [ethYear, ethMonth, ethDay] = etDateStr.split("-").map(Number);
-          const greg = EtCalendar.toGregorian(ethYear, ethMonth, ethDay); // { year, month, day }
-          date = `${greg.year}-${String(greg.month).padStart(2, '0')}-${String(greg.day).padStart(2, '0')}`;
+          date = etDateStr;
         } else {
           date = new Date().toISOString(); // fallback if no input
         }
@@ -390,12 +386,6 @@
       datePickerWrapper.style.display = todayCheck.checked ? "none" : "block";
     });
 
-    // Initialize Ethiopian calendar
-    EtCalendar.init({
-      target: "#customDate",
-      type: "Ethiopian", // Or "Gregorian"
-      format: "yyyy-MM-dd"
-    });
 
   </script>
 </body>
