@@ -164,12 +164,15 @@
 <body>
 
   <header class="header">
-    <div><button class="action-btn"  id="logout-btn">Log Ou.</button></div>
+    <div><button class="action-btn"  id="logout-btn">Log Out</button></div>
     <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
     <div></div>
   </header>
     
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script> <!-- ADD THIS LINE -->
 
   <script>
     const firebaseConfig = {
@@ -184,6 +187,13 @@
   
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("✅ Anonymous login successful");
+      })
+      .catch((error) => {
+        console.error("❌ Anonymous login failed:", error);
+      });
     const data = JSON.parse(localStorage.getItem("selectedPurchase"));
     const purchaseKey = data?.key;
 

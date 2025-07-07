@@ -71,6 +71,7 @@ try {
 
 const db = admin.database();
 
+
 const purchaseStartTime = Date.now();
 
 // ─── Listen for new purchases ─────────────────────────────────────────────

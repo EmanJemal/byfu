@@ -24,7 +24,11 @@
 
   <div class="products"></div>
 
-  
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script> <!-- ADD THIS LINE -->
+
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
@@ -60,7 +64,14 @@
   
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-  
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("✅ Anonymous login successful");
+      })
+      .catch((error) => {
+        console.error("❌ Anonymous login failed:", error);
+      });
+
     window.onload = function () {
       const container = document.querySelector(".products");
       db.ref("products").once("value", (snapshot) => {
