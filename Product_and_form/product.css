@@ -7,6 +7,9 @@
     background-color: #fff;
     height: fit-content;
   }
+  .products, #loader {
+    transition: opacity 0.3s ease;
+  }
   
   .product:hover {
     transform: scale(1.01);

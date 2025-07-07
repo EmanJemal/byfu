@@ -21,8 +21,13 @@
     <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
     <div><button class="action-btn-sub">Submit</button></div>
   </header>
+<!-- Loader -->
+<div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+  <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+          style="width: 300px; height: 300px; border: none;"></iframe>
+</div>
 
-  <div class="products"></div>
+<div class="products" style="visibility: hidden; opacity: 0;"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -138,13 +143,25 @@
               choiceBtn.classList.toggle('selected');
             });
           });
-  
+          hideLoader()
           groups[codePrefix].appendChild(div);
         });
       });
     };
   
-    document.querySelector('.action-btn-sub').addEventListener('click', () => {
+    function showLoader() {
+      document.getElementById("loader").style.display = "flex";
+      document.querySelector(".products").style.visibility = "hidden";
+      document.querySelector(".products").style.opacity = "0";
+    }
+
+    function hideLoader() {
+      document.getElementById("loader").style.display = "none";
+      document.querySelector(".products").style.visibility = "visible";
+      document.querySelector(".products").style.opacity = "1";
+    }
+
+  document.querySelector('.action-btn-sub').addEventListener('click', () => {
       const selectedProducts = [];
   
       document.querySelectorAll('.product').forEach(product => {

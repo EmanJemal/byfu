@@ -20,6 +20,13 @@
     <div></div>
   </header>
 
+    <!-- 🔁 Loader added -->
+    <div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+      <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+              style="width: 300px; height: 300px; border: none;"></iframe>
+    </div>
+
+    
   <div class="users" id="usersContainer">
     <!-- Dynamic users will be inserted here -->
   </div>
@@ -51,6 +58,7 @@
       });
 
     const usersContainer = document.getElementById("usersContainer");
+    const loader = document.getElementById("loader");
 
     function createUserBox(name, product, fullPayment, purchaseData) {
       const div = document.createElement("div");
@@ -109,12 +117,32 @@
   usersContainer.appendChild(div);
 }
 
+function showLoader() {
+  loader.style.visibility = "visible";
+  loader.style.opacity = "1";
+  usersContainer.style.visibility = "hidden";
+  usersContainer.style.opacity = "0";
+}
+
+function hideLoader() {
+  loader.style.visibility = "hidden";
+  loader.style.opacity = "0";
+  loader.style.height="0"
+  usersContainer.style.visibility = "visible";
+  usersContainer.style.opacity = "1";
+}
+
+    // Show loader immediately
+    showLoader();
+
 firebase.auth().onAuthStateChanged(user => {
   if (!user) return;
+  
 
   db.ref("purchases").once("value").then(snapshot => {
       const data = snapshot.val();
       if (!data) return createAddButtons();
+      
 
       // Convert to array and sort by latest
       const purchases = Object.entries(data)
@@ -134,6 +162,7 @@ firebase.auth().onAuthStateChanged(user => {
 
 
       createAddButtons();
+      hideLoader()
     });
 
 }

@@ -4,6 +4,11 @@
     width: 95%;
     margin-top: 10px;
   }
+  #loader,
+.users {
+  transition: opacity 0.3s ease;
+}
+
   .user {
     border: black solid 2px;
     padding: 20px;
