@@ -77,7 +77,14 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("✅ Anonymous login successful");
+      })
+      .catch((error) => {
+        console.error("❌ Anonymous login failed:", error);
+      });
+      
     const imageIdInput = document.getElementById("image-id");
     const imagePreviewDiv = document.getElementById("image-preview");
 
