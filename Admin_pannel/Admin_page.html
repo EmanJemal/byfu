@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="Admin_page.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <script src="../common/common.js"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div><div><button class="action-btn" id="logout-btn">Log Out</button></div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+
+  <h2>Scan this QR in Google Authenticator</h2>
+  <!--<img id="qr" src="" alt="QR Code for Authenticator"/>-->
+
+  <!-- Removed admin-id input -->
+  <input type="text" id="totp-code" placeholder="Enter 6-digit Code" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
+  <button id="verify-btn">Verify</button>
+
+  <div class="status" id="status"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+      storageBucket: "byd-furniture-36585.appspot.com",
+      messagingSenderId: "133527815399",
+      appId: "1:133527815399:web:8ef671206d0478824ece42"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("✅ Anonymous login successful");
+      })
+      .catch((error) => {
+        console.error("❌ Anonymous login failed:", error);
+      });
+
+    const adminId = "Arafat"; // fixed admin name
+
+    // Fetch QR code for this admin
+    fetch(`http://localhost:3000/totp/send-setup?admin=${adminId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById("qr").src = data.qrImage;
+        } else {
+          alert("Failed to generate QR");
+        }
+      });
+
+    // Verify TOTP code
+    document.getElementById("verify-btn").addEventListener("click", async () => {
+      const code = document.getElementById("totp-code").value.trim();
+      const status = document.getElementById("status");
+
+      if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+        status.style.color = "red";
+        status.textContent = "Please enter a valid 6-digit code.";
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:3000/totp/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminId, code })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          status.style.color = "green";
+          status.textContent = "✅ Verified. Redirecting...";
+          localStorage.setItem("sessionStart", Date.now());
+          //setTimeout(() => {
+           // window.location.href = "../user_page.html";
+          //}, 1000);
+        } else {
+          status.style.color = "red";
+          status.textContent = "❌ Invalid code. Try again.";
+        }
+      } catch (err) {
+        console.error("Verification error:", err);
+        status.style.color = "red";
+        status.textContent = "❌ Error during verification.";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -984,3 +984,63 @@ function sendEditMenu(chatId, product) {
   });
   
   
+
+
+
+const { authenticator } = require('otplib');
+const qrcode = require('qrcode');
+
+// Generate QR for admin to scan (run this once)
+app.get('/totp/send-setup', async (req, res) => {
+  const adminId = req.query.admin;
+  const ref = db.ref(`admin_secrets/${adminId}`);
+  const dataSnap = await ref.once('value');
+  const data = dataSnap.val();
+
+  if (data?.secret) {
+    // Secret exists, reuse it
+    const otpauth = authenticator.keyuri(adminId, 'BYD-Furniture', data.secret);
+    qrcode.toDataURL(otpauth, (err, imageUrl) => {
+      if (err) return res.status(500).json({ success: false });
+      return res.json({ success: true, qrImage: imageUrl });
+    });
+  } else {
+    // No secret yet, generate & save
+    const secret = authenticator.generateSecret();
+    await ref.set({ secret, setupComplete: false, setupTime: Date.now() });
+
+    const otpauth = authenticator.keyuri(adminId, 'BYD-Furniture', secret);
+    qrcode.toDataURL(otpauth, (err, imageUrl) => {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, qrImage: imageUrl });
+    });
+  }
+});
+
+
+app.post('/totp/verify', async (req, res) => {
+  const { adminId, code } = req.body;
+  const ref = db.ref(`admin_secrets/${adminId}`);
+  const snapshot = await ref.once('value');
+  const data = snapshot.val();
+
+  if (!data?.secret) {
+    return res.status(400).json({ success: false, message: 'No secret found' });
+  }
+
+  // Check for re-use
+  if (data.lastUsedCode === code) {
+    return res.status(403).json({ success: false, message: 'Code already used' });
+  }
+
+  // Validate TOTP code
+  const isValid = authenticator.check(code, data.secret);
+
+  if (isValid) {
+    // Save the used code to prevent replay
+    await ref.update({ lastUsedCode: code, lastUsedAt: Date.now() });
+    return res.json({ success: true });
+  } else {
+    return res.status(403).json({ success: false, message: 'Invalid code' });
+  }
+});
