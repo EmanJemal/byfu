@@ -1,6 +1,6 @@
 const sessionStart = localStorage.getItem("sessionStart");
 const now = Date.now();
-const FOUR_MINUTES = 60 * 60 * 1000;
+const FOUR_MINUTES = 120 * 60 * 1000;
 
 if (!sessionStart || now - parseInt(sessionStart) > FOUR_MINUTES) {
   // session expired or not found
