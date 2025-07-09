@@ -368,6 +368,7 @@
 
           alert('✅ Purchase recorded and inventory updated!');
           localStorage.removeItem('selectedProducts');
+          window.location.href = "../user_page/user_page.html"
           document.getElementById('userForm').reset();
           productContainer.innerHTML = "";
           preview.innerHTML = "";
