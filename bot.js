@@ -97,10 +97,8 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
       const currentAmount = parseInt(product[location]) || 0;
       const newAmount = Math.max(0, currentAmount - qty); // prevent negative
-
-      // Update database
       await productRef.update({ [location]: newAmount });
-
+      
       // Notify admin
       let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n ስም: *${customerName}*\n የእቃ ስም: *${p.name}* (${p.choice})\n ብዛት: *${qty}*\n አጠቃላይ ዱቤ: *${dube || 0} Birr*\n አጠቃላይ ዋጋ: *${p.price}* Birr \n የሻጭ ስም: ${nameofseller} \n በ Mobile Bank የገባ: ${mobilebankamt} ብር`;
       if (overallQabd) caption += `\n💵 Qabd: *${overallQabd}* Birr`;
