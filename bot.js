@@ -88,13 +88,18 @@ db.ref('purchases').on('child_added', async (snapshot) => {
   
     for (let p of products) {
       const productRef = db.ref(`products/${p.id}`);
+  
+      // 🔄 Wait a tiny bit to make sure frontend pushed the update
+      await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
+  
+      // ✅ Re-fetch the product to get the latest quantity
       const productSnap = await productRef.once('value');
       const product = productSnap.val();
       if (!product) continue;
   
       const qty = parseInt(p.qty) || 0;
       const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
-      const remaining = parseInt(product[location]) || 0; // ✅ Get directly from DB
+      const remaining = parseInt(product[location]) || 0; // ✅ Now correct value from DB
   
       let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n`;
       caption += `ስም: *${customerName}*\n`;
@@ -122,7 +127,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       }
     }
   
-    // Send screenshots
+    // Screenshots (same as before)
     for (let ssId of screenshotIds) {
       const ssSnap = await db.ref(`Screenshot_id/${ssId}`).once('value');
       const ssData = ssSnap.val();
