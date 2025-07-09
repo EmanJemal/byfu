@@ -85,26 +85,31 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 
   for (let admin of adminChats) {
     const chatId = admin.id;
-
+  
     for (let p of products) {
       const productRef = db.ref(`products/${p.id}`);
       const productSnap = await productRef.once('value');
       const product = productSnap.val();
       if (!product) continue;
-
-      // Get quantity to subtract
+  
       const qty = parseInt(p.qty) || 0;
       const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
-      const newAmount = parseInt(product[location]) || 0; // already updated from frontend
-
-
-      // Notify admin
-      let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n ስም: *${customerName}*\n የእቃ ስም: *${p.name}* (${p.choice})\n ብዛት: *${qty}*\n አጠቃላይ ዱቤ: *${dube || 0} Birr*\n አጠቃላይ ዋጋ: *${p.price}* Birr \n የሻጭ ስም: ${nameofseller} \n በ Mobile Bank የገባ: ${mobilebankamt} ብር`;
-      if (overallQabd) caption += `\n💵 Qabd: *${overallQabd}* Birr`;
-      caption += `\n ${p.choice} የቀር : *${newAmount}*`;
-      caption += `\n📅 ${new Date(date).toLocaleString()}`;
-
-      const photo = (product.image?.startsWith('AgA') ? product.image : null);
+      const remaining = parseInt(product[location]) || 0; // ✅ Get directly from DB
+  
+      let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n`;
+      caption += `ስም: *${customerName}*\n`;
+      caption += `የእቃ ስም: *${p.name}* (${p.choice})\n`;
+      caption += `ብዛት: *${qty}*\n`;
+      caption += `አጠቃላይ ዱቤ: *${dube || 0} Birr*\n`;
+      caption += `አጠቃላይ ዋጋ: *${p.price}* Birr\n`;
+      caption += `የሻጭ ስም: ${nameofseller}\n`;
+      caption += `በ Mobile Bank የገባ: ${mobilebankamt} ብር\n`;
+  
+      if (overallQabd) caption += `💵 Qabd: *${overallQabd}* Birr\n`;
+      caption += `${p.choice} የቀር : *${remaining}*\n`;
+      caption += `📅 ${new Date(date).toLocaleString()}`;
+  
+      const photo = product.image?.startsWith('AgA') ? product.image : null;
       if (photo) {
         await bot.sendPhoto(chatId, photo, {
           caption,
@@ -116,7 +121,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
         });
       }
     }
-
+  
     // Send screenshots
     for (let ssId of screenshotIds) {
       const ssSnap = await db.ref(`Screenshot_id/${ssId}`).once('value');
@@ -129,6 +134,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       }
     }
   }
+  
 
   console.log(`✅ Notified admins about new purchase: ${key}`);
 });
