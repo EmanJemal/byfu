@@ -98,7 +98,7 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       if (!product) continue;
   
       const qty = parseInt(p.qty) || 0;
-      const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
+      const location = p.choice === 'suq' ? 'amount_suq' : 'amount_store';
       await new Promise(resolve => setTimeout(resolve, 800)); // wait 800ms
       const remaining = parseInt(product[location]) || 0;
   
