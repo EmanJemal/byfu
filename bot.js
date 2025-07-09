@@ -93,13 +93,13 @@ db.ref('purchases').on('child_added', async (snapshot) => {
       await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
   
       // ✅ Re-fetch the product to get the latest quantity
+      const productSnap = await db.ref(`products/${p.id}`).once('value');
+      const product = productSnap.val();
       if (!product) continue;
   
       const qty = parseInt(p.qty) || 0;
       const location = p.choice === 'Suq' ? 'amount_suq' : 'amount_store';
       await new Promise(resolve => setTimeout(resolve, 800)); // wait 800ms
-      const productSnap = await db.ref(`products/${p.id}`).once('value');
-      const product = productSnap.val();
       const remaining = parseInt(product[location]) || 0;
   
       let caption = `🛒 *✅✅✅✅✅ አዲስ ሽያጭ*\n`;
