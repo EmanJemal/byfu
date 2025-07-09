@@ -51,7 +51,12 @@
       </div>
   
       <!-- ✅ This is where products should load -->
-      <div id="productContainer"> </div>
+      <div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+        <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+                style="width: 300px; height: 300px; border: none;"></iframe>
+      </div>
+      <div id="productContainer">     <!-- 🔁 Loader added -->
+      </div>
       
       <h3 id="expectedPaymentLabel">
         Total Ammount: <span id="totalDisplay">0</span> Birr
@@ -170,6 +175,25 @@
   }
 }
 
+    const usersContainer = document.getElementById("productContainer");
+    const loader = document.getElementById("loader");
+    function showLoader() {
+      loader.style.visibility = "visible";
+      loader.style.opacity = "1";
+      usersContainer.style.visibility = "hidden";
+      usersContainer.style.opacity = "0";
+    }
+
+    function hideLoader() {
+      loader.style.visibility = "hidden";
+      loader.style.opacity = "0";
+      loader.style.height="0"
+      usersContainer.style.visibility = "visible";
+      usersContainer.style.opacity = "1";
+    }
+
+    // Show loader immediately
+    showLoader();
 
     function updateTotalQabd() {
     const isFull = document.getElementById('fullPayment').checked;
@@ -215,7 +239,7 @@
           </div>
         `;
         productContainer.appendChild(productDiv);
-
+        hideLoader();
         productDiv.querySelector(`[name=productAmt${index}]`).addEventListener('input', updateTotal);
       });
     });
