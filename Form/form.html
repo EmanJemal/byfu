@@ -13,7 +13,7 @@
 <body>
 
   <header class="header">
-    <div>    <div><button class="action-btn"  id="logout-btn">Log Out</button></div>  </div>
+    <div></div>
     <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
     <div></div>
   </header>
@@ -278,8 +278,6 @@
               <img src="${image}" alt="screenshot" style="max-width: 200px; border-radius: 8px;">
               <p><strong>Date:</strong> ${data.date || "N/A"}</p>
             `;
-          } else {
-            container.innerHTML = `<p style='color:red'>No screenshot found for ID: ${id}</p>`;
           }
 
           preview.appendChild(container);

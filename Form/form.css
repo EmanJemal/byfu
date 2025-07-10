@@ -28,9 +28,12 @@
     font-weight: bold;
     font-family: 'Poppins', poppin;
 }
+.form-1 div .text-number::placeholder{
+  font-size: 18px;
+}
 .form-1 div .checkbox{
     height: 20px;
-    width: 200px;
+    width: 100px;
     border-radius: 2px;
     border-color: black;
     border-style: solid;
@@ -63,4 +66,11 @@
 .action-btn:hover,
 .submit-btn:hover {
   background-color: #980e0e;
+}
+
+@media (max-width: 762px){
+  .form-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 }
