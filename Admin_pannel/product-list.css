@@ -1,0 +1,123 @@
+/* PRODUCT CONTAINER */
+.product {
+    border: 2px solid #000;
+    border-radius: 10px;
+    background-color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border 0.3s;
+  }
+  li{
+    text-decoration: none;
+    list-style: decimal;
+    font-weight: bold;
+    margin-left: 10px;
+    margin-top: 20px;
+  }
+  
+  .product:hover {
+    transform: scale(1.01);
+  }
+  
+  .product-clicked {
+    border-color: #d91717;
+    border-width: 3px;
+    box-shadow: 0 0 12px rgba(217, 23, 23, 0.4);
+  }
+  
+  /* PRODUCT IMAGE */
+  .product img {
+    width: 100%;
+    max-height: 550px;
+    display: block;
+    object-fit: cover;
+  }
+  
+  /* PRODUCT DETAILS TEXT */
+  .product-details {
+    padding: 15px;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .product-details h1 {
+    font-size: 1.2rem;
+    color: #d91717;
+    margin-bottom: 5px;
+  }
+  
+  .product-details p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #333;
+    word-break: break-word;
+  }
+  
+  /* GROUP TITLE */
+  .group-title {
+    margin-top: 40px;
+    color: #333;
+    font-size: 1.5rem;
+    cursor: pointer;
+    grid-column: 1 / -1;
+    background-color: #f1f1f1;
+    padding: 10px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .group-title:hover {
+    background-color: #ddd;
+  }
+  
+  /* GRID CONTAINER */
+  .group-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+    gap: 40px;
+    padding: 20px;
+  }
+  
+  /* HIDDEN COLLAPSIBLE SECTIONS */
+  .hidden {
+    display: none;
+  }
+  
+  /* ACTION BUTTONS */
+  .action-btn, .action-btn-sub {
+    background-color: #d91717;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background-color 0.3s ease;
+    width: 50%;
+    margin-left: 80px;
+  }
+  
+  .action-btn:hover, .action-btn-sub:hover {
+    background-color: #980e0e;
+  }
+  
+  /* TRANSITION FOR LOADER */
+  .products, #loader {
+    transition: opacity 0.3s ease;
+  }
+  
+  /* OPTIONAL: Make single column on small screens */
+  @media (max-width: 420px) {
+    .group-content {
+      grid-template-columns: 1fr;
+    }
+  
+    .action-btn, .action-btn-sub {
+      width: 80%;
+      margin-left: 10%;
+    }
+  }
+  

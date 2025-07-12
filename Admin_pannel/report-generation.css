@@ -1,0 +1,38 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f9f9f9;
+    padding: 30px;
+    color: #333;
+  }
+  h1 {
+    color: #d91717;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  .checkbox-group label {
+    display: inline-block;
+    margin-right: 15px;
+  }
+  #generateBtn {
+    background-color: #d91717;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #generateBtn:hover {
+    background-color: #980e0e;
+  }

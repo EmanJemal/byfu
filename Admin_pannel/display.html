@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Info</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="display.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+    
+  <div class="container">
+    <img id="productImage" class="product-image" src="" alt="Product Image">
+    <h1 id="productName"></h1>
+    <p><strong>Code:</strong> <span id="productCode"></span></p>
+    <p><strong>Store:</strong> <span id="storeQty"></span> pcs</p>
+    <p><strong>Suq:</strong> <span id="suqQty"></span> pcs</p>
+    <p><strong>Cost Price:</strong> <span id="costPrice"></span> birr</p>
+    <p><strong>Selling Price:</strong> <span id="sellingPrice"></span> birr</p>
+
+    <div class="section">
+      <h2>📦 Purchase History</h2>
+      <ul id="purchaseHistory"></ul>
+    </div>
+
+    <div class="section">
+      <h2>➕ Added Stock</h2>
+      <ul id="addedStock"></ul>
+    </div>
+
+    <a href="./product-list.html" class="back-btn">⬅ Back</a>
+  </div>
+
+  <script>
+    const data = JSON.parse(localStorage.getItem("selectedProductFull"));
+    if (!data) {
+      document.body.innerHTML = '<p style="text-align:center; padding:40px;">No product selected.</p>';
+    } else {
+      document.getElementById("productImage").src = data.image || "../products/placeholder.jpg";
+      document.getElementById("productName").textContent = data.name || 'Unnamed Product';
+      document.getElementById("productCode").textContent = data.code || 'N/A';
+      document.getElementById("storeQty").textContent = data.amount_store || 0;
+      document.getElementById("suqQty").textContent = data.amount_suq || 0;
+      document.getElementById("costPrice").textContent = data.cost || 'N/A';
+      document.getElementById("sellingPrice").textContent = data.selling || 'N/A';
+
+      const historyList = document.getElementById("purchaseHistory");
+      if (data.purchaseHistory && data.purchaseHistory.length > 0) {
+        data.purchaseHistory.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = `${item.date} - ${item.price} birr by ${item.seller} (to ${item.buyer}) - Qty: ${item.qty}`;
+          historyList.appendChild(li);
+        });
+      } else {
+        historyList.innerHTML = '<li>No history found.</li>';
+      }
+
+      const addedList = document.getElementById("addedStock");
+      if (data.addedStock && data.addedStock.length > 0) {
+        data.addedStock.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = `${item.date} - Added ${item.amount} pcs to ${item.location} (Now: ${item.newAmount})`;
+          addedList.appendChild(li);
+        });
+      } else {
+        addedList.innerHTML = '<li>No added stock records.</li>';
+      }
+    }
+  </script>
+</body>
+</html>

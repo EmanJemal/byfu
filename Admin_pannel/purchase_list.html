@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="purchase_list.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+
+  <h1>📋 All Purchases</h1>
+    <!-- Loader -->
+    <div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+        <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+                style="width: 300px; height: 300px; border: none;"></iframe>
+    </div>
+
+
+  <button id="exportBtn">⬇️ Export to Excel</button>
+  <div id="purchaseContainer"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+      storageBucket: "byd-furniture-36585.appspot.com",
+      messagingSenderId: "133527815399",
+      appId: "1:133527815399:web:8ef671206d0478824ece42"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let allExportRows = [];
+    function hideLoader() {
+          document.getElementById("loader").style.display = "none";
+          document.querySelector(".products").style.visibility = "visible";
+          document.querySelector(".products").style.opacity = "1";
+        }
+
+    firebase.auth().signInAnonymously().then(loadPurchases);
+
+    async function loadPurchases() {
+      const [productsSnap, screenshotsSnap, purchasesSnap] = await Promise.all([
+        db.ref("products").once("value"),
+        db.ref("Screenshot_id").once("value"),
+        db.ref("purchases").once("value")
+      ]);
+
+      const productMap = productsSnap.val() || {};
+      const screenshotMap = screenshotsSnap.val() || {};
+      const purchases = purchasesSnap.val() || {};
+
+      const container = document.getElementById("purchaseContainer");
+      Object.values(purchases).reverse().forEach(purchase => {
+        const box = document.createElement("div");
+        box.className = "purchase-box";
+
+        const productHTML = (purchase.products || []).map(prod => {
+          const img = productMap[prod.id]?.image || '../products/placeholder.jpg';
+          const imageUrl = img.startsWith('AgA') 
+            ? `https://byfu-production-fe07.up.railway.app/telegram-image/${img}`
+            : (img.startsWith('http') ? img : '../products/placeholder.jpg');
+
+          allExportRows.push({
+            Customer: purchase.customerName || '',
+            Date: purchase.date || '',
+            Seller: purchase.nameofseller || '',
+            ProductName: prod.name || '',
+            ProductCode: prod.code || '',
+            Price: prod.price || '',
+            Qty: prod.qty || '',
+            Choice: prod.choice || '',
+            FullPayment: purchase.fullPayment ? 'Yes' : 'No',
+            FullSet: purchase.fullSet ? 'Yes' : 'No',
+            MobileBank: purchase.mobileBank ? 'Yes' : 'No'
+          });
+
+          return `
+            <div class="product-entry">
+              <div class="image-group">
+                <img src="${imageUrl}" class="product-img" alt="product" />
+                <div class="details">
+                  <p><strong>Name:</strong> ${prod.name}</p>
+                  <p><strong>Code:</strong> ${prod.code}</p>
+                  <p><strong>Price:</strong> ${prod.price} birr</p>
+                  <p><strong>Qty:</strong> ${prod.qty}</p>
+                  <p><strong>Choice:</strong> ${prod.choice}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const screenshots = (purchase.screenshotIds || []).map(id => {
+          const code = screenshotMap[id];
+          if (!code) return '';
+          const src = `https://byfu-production-fe07.up.railway.app/telegram-image/${code.image}`;
+          return `<img src="${src}" class="screenshot-img" alt="screenshot" />`;
+        }).join("");
+
+        box.innerHTML = `
+          <h2>${purchase.customerName || 'Unknown Customer'}</h2>
+          <p><strong>Date:</strong> ${purchase.date || 'N/A'}</p>
+          <p><strong>Seller:</strong> ${purchase.nameofseller || 'N/A'}</p>
+          <p><strong>Full Payment:</strong> ${purchase.fullPayment ? '✅' : '❌'} | 
+             <strong>Full Set:</strong> ${purchase.fullSet ? '✅' : '❌'} | 
+             <strong>Mobile Bank:</strong> ${purchase.mobileBank ? '✅' : '❌'}</p>
+
+          <div class="section">
+            <h3>🛍️ Products</h3>
+            ${productHTML}
+          </div>
+
+          <div class="section">
+            <h3>🖼️ Screenshots</h3>
+            <div class="image-group">${screenshots}</div>
+          </div>
+        `;
+
+        container.appendChild(box);
+      });
+      hideLoader();
+    }
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const ws = XLSX.utils.json_to_sheet(allExportRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+      XLSX.writeFile(wb, "all_purchases.xlsx");
+    });
+  </script>
+</body>
+</html>

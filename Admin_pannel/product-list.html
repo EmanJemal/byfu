@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="product-list.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+    
+  <!-- Loader -->
+<div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+    <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+            style="width: 300px; height: 300px; border: none;"></iframe>
+  </div>
+  
+  <button id="exportBtn" style="
+  background-color: #d91717;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 20px;
+">⬇️ Export Products to Excel</button>
+<button id="exportBtng" style="
+background-color: #d91717;
+color: white;
+border: none;
+padding: 10px 20px;
+font-size: 16px;
+border-radius: 6px;
+cursor: pointer;
+margin: 20px;
+">⬇️ Export by Group to Excel</button>
+
+
+  <div class="products" style="visibility: hidden; opacity: 0;"></div>
+  
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+          authDomain: "byd-furniture-36585.firebaseapp.com",
+          databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+          projectId: "byd-furniture-36585",
+          storageBucket: "byd-furniture-36585.firebasestorage.app",
+          messagingSenderId: "133527815399",
+          appId: "1:133527815399:web:8ef671206d0478824ece42",
+          measurementId: "G-FLTWX2E8WX"
+        };
+      
+        const codeTypes = {
+          '00': '🛋️ List of Sofas',
+          '02': '🍽️ List of Dining Tables',
+          '03': '🪑 List of Chairs',
+          '04': '🪞 List of Center Tables',
+          '05': '🛏️ List of Beds',
+          '06': '🚗 List of Gari',
+          '07': '☕ List of Coffee Tables',
+          '08': '🖼️ List of Photo Frames',
+          '09': '📚 List of Mentafs',
+          '10': '💡 List of Mabrat',
+          '20': '🛋️ List of Consoles',
+          '30': '📺 List of TV Stands',
+          '40': '🎭 List of Ababa Maskemecha',
+          '50': '🛏️ List of Ferash',
+          '60': '🛋️ List of Fur',
+          '70': '🖥 List of desks',
+          '80': '🛏️ List of Bed Side',
+          '90': '🛋️ List of Comforts',
+        };
+      
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+      
+        window.onload = function () {
+          const container = document.querySelector(".products");
+      
+          firebase.auth().onAuthStateChanged(async user => {
+            if (!user) {
+              await firebase.auth().signInAnonymously().catch(err => {
+                console.error("Anonymous login failed", err);
+              });
+              return;
+            }
+      
+            const [productsSnapshot, purchasesSnapshot, addedSnapshot] = await Promise.all([
+              db.ref("products").once("value"),
+              db.ref("purchases").once("value"),
+              db.ref("added_product").once("value")
+            ]);
+      
+            const products = productsSnapshot.val();
+            const purchases = purchasesSnapshot.val();
+            const addedProducts = addedSnapshot.val();
+      
+            if (!products) return container.innerHTML = "<p>No products found.</p>";
+      
+            const productHistory = {};
+            const additionHistory = {};
+      
+            if (purchases) {
+              Object.values(purchases).forEach(p => {
+                (p.products || []).forEach(prod => {
+                  const code = prod.code;
+                  if (!productHistory[code]) productHistory[code] = [];
+                  productHistory[code].push({
+                    date: p.date,
+                    seller: p.nameofseller,
+                    price: prod.price,
+                    buyer: p.customerName,
+                    qty: prod.qty || 1
+                  });
+                });
+              });
+            }
+      
+            if (addedProducts) {
+              Object.values(addedProducts).forEach(a => {
+                const code = a.code;
+                if (!additionHistory[code]) additionHistory[code] = [];
+                additionHistory[code].push({
+                  amount: a.amount_added,
+                  location: a.location,
+                  newAmount: a["new-amount"],
+                  date: new Date(a.date_added).toLocaleString()
+                });
+              });
+            }
+      
+            const sortedEntries = Object.entries(products).sort((a, b) => {
+              const codeA = a[1].code?.substring(0, 2) || "99";
+              const codeB = b[1].code?.substring(0, 2) || "99";
+              return codeA.localeCompare(codeB);
+            });
+      
+            const groups = {};
+      
+            sortedEntries.forEach(([key, product]) => {
+              const codePrefix = product.code?.substring(0, 2) || "99";
+      
+              if (!groups[codePrefix]) {
+                const groupTitle = document.createElement("h2");
+                groupTitle.textContent = codeTypes[codePrefix] || `📦 Other Products (${codePrefix})`;
+                groupTitle.className = "group-title";
+                container.appendChild(groupTitle);
+      
+                const groupContainer = document.createElement("div");
+                groupContainer.className = "group-content hidden";
+                container.appendChild(groupContainer);
+      
+                groupTitle.addEventListener("click", () => {
+                  groupContainer.classList.toggle("hidden");
+                });
+      
+                groups[codePrefix] = groupContainer;
+              }
+      
+              const image = product.image?.startsWith("AgA")
+                ? `https://byfu-production-fe07.up.railway.app/telegram-image/${product.image}`
+                : (product.image?.startsWith("http") ? product.image : "../products/placeholder.jpg");
+      
+              const div = document.createElement("div");
+              div.className = "product";
+              div.setAttribute("data-id", key);
+      
+              const history = productHistory[product.code] || [];
+              const historyHtml = history.map(h => `
+                <li>
+                  <strong>${h.date}</strong> - ${h.price} birr by ${h.seller} (to ${h.buyer}) - Qty: ${h.qty}
+                </li>`).join('');
+      
+              const additions = additionHistory[product.code] || [];
+              const additionHtml = additions.map(a => `
+                <li>
+                  <strong>${a.date}</strong> - Added ${a.amount} pcs to ${a.location} (Now: ${a.newAmount})
+                </li>`).join('');
+      
+              div.innerHTML = `
+                <img src="${image}" alt="${product.name}" />
+                <div class="product-details">
+                  <h1>${product.name || 'Unnamed Product'}</h1>
+                  <p><strong>Code:</strong> ${product.code || 'N/A'}</p>
+                  <p><strong>Store:</strong> ${product.amount_store || 0} pcs</p>
+                  <p><strong>Suq:</strong> ${product.amount_suq || 0} pcs</p>
+                  <p><strong>የተገዛበት ዋጋ:</strong> ${product.cost || 'N/A'} birr</p>
+                  <p><strong>የተሸጠበት ዋጋ:</strong> ${product.selling || 'N/A'} birr</p>
+                  ${historyHtml ? `<p><strong>📦 Purchase History:</strong></p><ul>${historyHtml}</ul>` : '<p><em>No purchase history found.</em></p>'}
+                  ${additionHtml ? `<p><strong>➕ Added Stock:</strong></p><ul>${additionHtml}</ul>` : ''}
+                </div>
+              `;
+      
+              div.addEventListener("click", () => {
+                const fullData = {
+                  key,
+                  ...product,
+                  image,
+                  purchaseHistory: history,
+                  addedStock: additions
+                };
+                localStorage.setItem("selectedProductFull", JSON.stringify(fullData));
+                window.location.href = "display.html";
+              });
+      
+              hideLoader();
+              groups[codePrefix].appendChild(div);
+            });
+          });
+        };
+      
+        function hideLoader() {
+          document.getElementById("loader").style.display = "none";
+          document.querySelector(".products").style.visibility = "visible";
+          document.querySelector(".products").style.opacity = "1";
+        }
+
+        document.getElementById("exportBtn").addEventListener("click", () => {
+  const exportData = [];
+
+  const productElements = document.querySelectorAll(".product");
+
+  productElements.forEach(div => {
+    const name = div.querySelector("h1")?.textContent || '';
+    const code = div.querySelector("p:nth-of-type(1)")?.textContent?.split(":")[1]?.trim() || '';
+    const store = div.querySelector("p:nth-of-type(2)")?.textContent?.split(":")[1]?.trim() || '';
+    const suq = div.querySelector("p:nth-of-type(3)")?.textContent?.split(":")[1]?.trim() || '';
+    const cost = div.querySelector("p:nth-of-type(4)")?.textContent?.split(":")[1]?.trim() || '';
+    const selling = div.querySelector("p:nth-of-type(5)")?.textContent?.split(":")[1]?.trim() || '';
+
+    exportData.push({
+      Name: name,
+      Code: code,
+      Store: store,
+      Suq: suq,
+      "Cost Price": cost,
+      "Selling Price": selling
+    });
+  });
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Products");
+  XLSX.writeFile(wb, "products_list.xlsx");
+});
+
+
+document.getElementById("exportBtng").addEventListener("click", () => {
+  const workbook = XLSX.utils.book_new();
+  const groupMap = {};
+
+  document.querySelectorAll(".group-content").forEach((groupDiv, index) => {
+    const groupTitle = document.querySelectorAll(".group-title")[index]?.textContent || `Group ${index + 1}`;
+    const products = groupDiv.querySelectorAll(".product");
+
+    const rows = [];
+
+    products.forEach(div => {
+      const name = div.querySelector("h1")?.textContent || '';
+      const code = div.querySelector("p:nth-of-type(1)")?.textContent?.split(":")[1]?.trim() || '';
+      const store = div.querySelector("p:nth-of-type(2)")?.textContent?.split(":")[1]?.trim() || '';
+      const suq = div.querySelector("p:nth-of-type(3)")?.textContent?.split(":")[1]?.trim() || '';
+      const cost = div.querySelector("p:nth-of-type(4)")?.textContent?.split(":")[1]?.trim() || '';
+      const selling = div.querySelector("p:nth-of-type(5)")?.textContent?.split(":")[1]?.trim() || '';
+
+      rows.push({
+        Name: name,
+        Code: code,
+        Store: store,
+        Suq: suq,
+        "Cost Price": cost,
+        "Selling Price": selling
+      });
+    });
+
+    if (rows.length > 0) {
+      const safeSheetName = groupTitle.replace(/[\/\\?\[\]*:]/g, '').slice(0, 31); // max Excel sheet name
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(workbook, sheet, safeSheetName);
+    }
+  });
+
+  XLSX.writeFile(workbook, "products_by_group.xlsx");
+});
+
+      </script>
+           
+  
+  
+  </body>
+  </html>
+  
