@@ -17,8 +17,6 @@
     <div></div>
   </header>
 
-  <h2>Scan this QR in Google Authenticator</h2>
-  <img id="qr" src="" alt="QR Code for Authenticator"/>
 
   <!-- Removed admin-id input -->
   <input type="text" id="totp-code" placeholder="Enter 6-digit Code" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
@@ -87,9 +85,9 @@
         if (data.success) {
           status.style.color = "green";
           status.textContent = "✅ Verified. Redirecting...";
-          localStorage.setItem("sessionStart", Date.now());
+          localStorage.setItem("sessionStartauth", Date.now());
           setTimeout(() => {
-            window.location.href = "../index.html";
+            window.location.href = "menu_page.html";
           }, 1000);
         } else {
           status.style.color = "red";
