@@ -718,6 +718,133 @@ function sendEditMenu(chatId, product) {
     }
   });
   
+  bot.onText(/\/specific/, async (msg) => {
+    const chatId = msg.chat.id;
+  
+    if (!allowedUsers.includes(chatId)) {
+      console.log(`❌ Unauthorized user attempted to /byorder: ${chatId}`);
+      return;
+    }
+  
+    try {
+      const snapshot = await db.ref('products').once('value');
+      const products = snapshot.val();
+  
+      if (!products) {
+        return bot.sendMessage(chatId, '📦 No products found.');
+      }
+  
+      const codeTypes = {
+        '00': '🛋️ Sofas',
+        '02': '🍽️ Dining Tables',
+        '03': '🪑 Chairs',
+        '04': '🪞 Center Tables',
+        '05': '🛏️ Beds',
+        '06': '🚗 Gari',
+        '07': '☕ Coffee Tables',
+        '08': '🖼️ Photo Frames',
+        '09': '📚 Mentafs',
+        '10': '💡 Mabrat',
+        '20': '🛋️ Consoles',
+        '30': '📺 TV Stands',
+        '40': '🎭 Ababa Maskemecha',
+        '50': '🛏️ Ferash',
+        '60': '🛋️ Fur',
+        '70': '🖥 Desks',
+        '80': '🛏 Bedside',
+        '90': '🛏 Comforts',
+      };
+  
+      // Build inline buttons for available groups
+      const grouped = {};
+  
+      for (let key in products) {
+        const p = products[key];
+        if (!p.code || p.code.length < 2) continue;
+        const prefix = p.code.substring(0, 2);
+        if (!grouped[prefix]) grouped[prefix] = [];
+        grouped[prefix].push(p);
+      }
+  
+      const keyboard = [];
+  
+      for (const prefix of Object.keys(codeTypes)) {
+        if (!grouped[prefix]) continue;
+  
+        const label = `List All ${codeTypes[prefix]}`;
+        keyboard.push([{
+          text: label,
+          callback_data: `list_prefix_${prefix}`
+        }]);
+      }
+  
+      await bot.sendMessage(chatId, '📂 Choose a product category:', {
+        reply_markup: {
+          inline_keyboard: keyboard
+        }
+      });
+  
+    } catch (err) {
+      console.error(err);
+      bot.sendMessage(chatId, '❌ Failed to load product categories.');
+    }
+  });
+  bot.on('callback_query', async (query) => {
+    const chatId = query.message.chat.id;
+    const data = query.data;
+  
+    if (data.startsWith('list_prefix_')) {
+      const prefix = data.replace('list_prefix_', '');
+  
+      try {
+        const snapshot = await db.ref('products').once('value');
+        const products = snapshot.val();
+  
+        if (!products) {
+          return bot.sendMessage(chatId, '📦 No products found.');
+        }
+  
+        const filtered = Object.values(products).filter(p => p.code?.startsWith(prefix));
+  
+        if (filtered.length === 0) {
+          return bot.sendMessage(chatId, '🚫 No products found for this category.');
+        }
+  
+        for (const p of filtered) {
+          const text = `
+  <b>${p.name || 'Unnamed Product'}</b>
+  📦 Code: <code>${p.code}</code>
+  💰 Cost: ${p.cost || 'N/A'}
+  💵 Selling: ${p.selling || 'N/A'}
+  🏢 Store: ${p.amount_store || 0}
+  🛍️ Suq: ${p.amount_suq || 0}
+          `.trim();
+  
+          const opts = {
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [[
+                { text: '✏️ Edit Product', callback_data: `admin_edit_${p.code}` },
+                { text: '🗑️ Add Product', callback_data: `admin_add_product_${p.code}` }
+              ]]
+            }
+          };
+  
+          if (p.image) {
+            await bot.sendPhoto(chatId, p.image, {
+              caption: text,
+              ...opts
+            });
+          } else {
+            await bot.sendMessage(chatId, text, opts);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        bot.sendMessage(chatId, '❌ Failed to list products.');
+      }
+    }
+  });
   
 
   bot.onText(/\/byorder/, async (msg) => {
@@ -998,6 +1125,10 @@ function sendEditMenu(chatId, product) {
     // ───── 🆕 New Product Creation Flow ─────────────────────
     const userSession = userStates[chatId];
     if (userSession) {
+        if (msg.text && msg.text.startsWith('/')) {
+    delete userStates[chatId];
+    return bot.sendMessage(chatId, '🚫 Flow cancelled.');
+  }
       console.log('🆕 Add New Product flow');
   
       const step = userSession.step;
@@ -1007,8 +1138,8 @@ function sendEditMenu(chatId, product) {
         if (msg.photo) {
           // Sent as photo
           userSession.data.image = msg.photo[msg.photo.length - 1].file_id;
-        } else if (msg.document && msg.document.mime_type.startsWith('image/')) {
-          // Sent as file/document
+        } else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith('image/')) {
+          // Sent as document
           userSession.data.image = msg.document.file_id;
         } else {
           return bot.sendMessage(chatId, '❌ Please send a valid image.');
