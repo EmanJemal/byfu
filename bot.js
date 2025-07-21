@@ -71,6 +71,46 @@ try {
 
 const db = admin.database();
 
+const { createHash } = require('crypto');
+const imageHash = require('image-hash');
+const fetch = require('node-fetch');
+
+function hashImageBuffer(buffer) {
+  return new Promise((resolve, reject) => {
+    imageHash.hash(buffer, 16, true, (err, hash) => {
+      if (err) return reject(err);
+      resolve(hash);
+    });
+  });
+}
+
+function hammingDistance(a, b) {
+  let dist = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) dist++;
+  }
+  return dist;
+}
+
+async function findMatchingProductByImage(buffer) {
+  const uploadedHash = await hashImageBuffer(buffer);
+  const snapshot = await db.ref('products').once('value');
+  const products = snapshot.val();
+
+  if (!products) return null;
+
+  for (const [key, product] of Object.entries(products)) {
+    if (product.imageHash) {
+      const distance = hammingDistance(uploadedHash, product.imageHash);
+      if (distance < 5) {
+        return { key, product };
+      }
+    }
+  }
+
+  return null;
+}
+
 
 const purchaseStartTime = Date.now();
 
@@ -304,6 +344,53 @@ bot.onText(/\/store/, (msg) => {
   userStates[chatId] = { step: 'awaiting_image', data: {} };
   bot.sendMessage(chatId, '📸 Photo ላክ');
 });
+const awaitingPhoto = {};
+
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
+// /phot command
+bot.onText(/\/photo/, async (msg) => {
+  const chatId = msg.chat.id;
+  const imageUrl = 'https://firebasestorage.googleapis.com/v0/b/YOUR_PROJECT_ID/o/Screenshot_id%2Fsome_image_id.jpg?alt=media';
+
+  try {
+    // Get file name from URL (you can change this logic)
+    const fileName = 'downloaded_image.jpg';
+    const filePath = path.join(__dirname, fileName);
+
+    const response = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'stream'
+    });
+
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
+
+    writer.on('finish', () => {
+      bot.sendPhoto(chatId, filePath)
+        .then(() => {
+          fs.unlinkSync(filePath); // optional: remove file after sending
+        })
+        .catch((err) => {
+          console.error('❌ Error sending photo:', err);
+          bot.sendMessage(chatId, 'Failed to send image.');
+        });
+    });
+
+    writer.on('error', (err) => {
+      console.error('❌ Error writing image file:', err);
+      bot.sendMessage(chatId, 'Failed to write image.');
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to process image:', error);
+    bot.sendMessage(chatId, 'Something went wrong while fetching the image.');
+  }
+});
+
 
 
 const screenshotSessions = {};
@@ -916,11 +1003,21 @@ function sendEditMenu(chatId, product) {
       const step = userSession.step;
       const text = msg.text;
   
-      if (step === 'awaiting_image' && msg.photo) {
-        userSession.data.image = msg.photo[msg.photo.length - 1].file_id;
+      if (step === 'awaiting_image') {
+        if (msg.photo) {
+          // Sent as photo
+          userSession.data.image = msg.photo[msg.photo.length - 1].file_id;
+        } else if (msg.document && msg.document.mime_type.startsWith('image/')) {
+          // Sent as file/document
+          userSession.data.image = msg.document.file_id;
+        } else {
+          return bot.sendMessage(chatId, '❌ Please send a valid image.');
+        }
+      
         userSession.step = 'awaiting_name';
         return bot.sendMessage(chatId, '📝 Send product name:');
       }
+      
   
       if (step === 'awaiting_name' && text) {
         userSession.data.name = text;
