@@ -789,6 +789,8 @@ function sendEditMenu(chatId, product) {
       bot.sendMessage(chatId, '❌ Failed to load product categories.');
     }
   });
+
+  
   bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
