@@ -54,7 +54,15 @@
           document.querySelector(".products").style.opacity = "1";
         }
 
-    firebase.auth().signInAnonymously().then(loadPurchases);
+
+        const auth = firebase.auth();
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    // If not signed in, redirect to login
+    window.location.href = "../loginpage.html";
+  }
+});
 
     async function loadPurchases() {
       const [productsSnap, screenshotsSnap, purchasesSnap] = await Promise.all([

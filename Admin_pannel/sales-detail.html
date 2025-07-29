@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Page</title>
+  <link rel="stylesheet" href="../common/header.css">
+  <link rel="stylesheet" href="product-list.html" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
+  <script src="../common/admincommon.js"></script>
+</head>
+<body>
+
+  <header class="header">
+    <div></div>
+    <img src="../byd.png" alt="BYD Furniture Logo" class="logo" />
+    <div></div>
+  </header>
+    
+  <!-- Loader 
+<div id="loader" style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+    <iframe src="https://lottie.host/embed/0a2e16ad-d163-4be1-8c79-31a912d3893e/efW07Kdq39.lottie" 
+            style="width: 300px; height: 300px; border: none;"></iframe>
+  </div>-->
+
+  <div class="header-sale">
+    <div class="sifan"></div>
+    <div class="samhar"></div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+  <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+        authDomain: "byd-furniture-36585.firebaseapp.com",
+        databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+        projectId: "byd-furniture-36585",
+        storageBucket: "byd-furniture-36585.firebasestorage.app",
+        messagingSenderId: "133527815399",
+        appId: "1:133527815399:web:8ef671206d0478824ece42",
+        measurementId: "G-FLTWX2E8WX"
+      };
+    
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+    </script>
+</body>
+</html>

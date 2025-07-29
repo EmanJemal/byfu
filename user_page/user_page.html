@@ -26,6 +26,7 @@
               style="width: 300px; height: 300px; border: none;"></iframe>
     </div>
 
+ 
     
   <div class="users" id="usersContainer">
     <!-- Dynamic users will be inserted here -->
@@ -49,13 +50,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-        firebase.auth().signInAnonymously()
-      .then(() => {
-        console.log("✅ Anonymous login successful");
-      })
-      .catch((error) => {
-        console.error("❌ Anonymous login failed:", error);
-      });
+    // Initialize Firebase first (as usual)
+// Add this code after Firebase initialization
+
+const auth = firebase.auth();
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    // If not signed in, redirect to login
+    window.location.href = "../loginpage.html";
+  }
+});
 
     const usersContainer = document.getElementById("usersContainer");
     const loader = document.getElementById("loader");

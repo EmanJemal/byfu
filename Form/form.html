@@ -141,13 +141,16 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    firebase.auth().signInAnonymously()
-      .then(() => {
-        console.log("✅ Anonymous login successful");
-      })
-      .catch((error) => {
-        console.error("❌ Anonymous login failed:", error);
-      });
+ 
+const auth = firebase.auth();
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    // If not signed in, redirect to login
+    window.location.href = "../loginpage.html";
+  }
+});
+
     const productContainer = document.getElementById('productContainer');
     const totalDisplay = document.getElementById('totalDisplay');
     const selectedProducts = JSON.parse(localStorage.getItem('selectedProducts') || '[]');
