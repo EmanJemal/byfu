@@ -29,10 +29,10 @@
         <input type="text" id="customerName" class="text-number" name="customerName">
       </div>
   
-      <div class="Tin-Number">
+      <!--<div class="Tin-Number">
         <h3>Tin Number</h3>
         <input type="number" id="tinNumber" class="text-number" name="tinNumber">
-      </div>
+      </div>-->
 
       <div class="dube">
         <h3>ዱቤ</h3>
@@ -72,13 +72,13 @@
     <div>
       <div class="Cash-Mobile">
         <h3 style="display: inline-block;">Mobile bank</h3>
-        <input type="checkbox" id="mobileBank" class="checkbox" name="mobileBank">
+        <input type="checkbox" checked id="mobileBank" class="checkbox" name="mobileBank">
       </div>
-  
+  <!--
       <div class="full-set">
         <h3 style="display: inline-block;">Full Set</h3>
         <input type="checkbox" id="fullSet" class="checkbox" name="fullSet">
-      </div>
+      </div>-->
   
       <div class="custom-date">
         <h3 style="display: inline-block;">Today</h3>
@@ -295,11 +295,9 @@ auth.onAuthStateChanged((user) => {
       e.preventDefault();
 
       const customerName = document.getElementById('customerName').value.trim();
-      const tinNumber = document.getElementById('tinNumber').value.trim();
       const fullPayment = document.getElementById('fullPayment').checked;
       const dube = document.getElementById('dube').value.trim();
       const mobileBank = document.getElementById('mobileBank').checked;
-      const fullSet = document.getElementById('fullSet').checked;
       const nameofseller = document.getElementById('sifan_or_samhar').value.trim();
       const cash = parseFloat(document.getElementById('cashAmount').value) || 0;
       const overallQabd = parseFloat(document.getElementById('overallQabd').value) || 0;
@@ -334,10 +332,8 @@ auth.onAuthStateChanged((user) => {
 
       const purchaseData = {
         customerName,
-        tinNumber,
         fullPayment,
         mobileBank,
-        fullSet,
         screenshotIds,
         nameofseller,
         date,
