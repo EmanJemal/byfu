@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="product-list.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/a9dbad3c27.js" crossorigin="anonymous"></script>
-  <script src="../common/admincommon.js"></script>
+  <script src="../common/admincommon.j"></script>
 </head>
 <body>
 
@@ -193,20 +193,40 @@ margin: 20px;
                   <strong>${a.date}</strong> - Added ${a.amount} pcs to ${a.location} (Now: ${a.newAmount})
                 </li>`).join('');
       
-              div.innerHTML = `
-                <img src="${image}" alt="${product.name}" />
-                <div class="product-details">
-                  <h1>${product.name || 'Unnamed Product'}</h1>
-                  <p><strong>Code:</strong> ${product.code || 'N/A'}</p>
-                  <p><strong>Store:</strong> ${product.amount_store || 0} pcs</p>
-                  <p><strong>Suq:</strong> ${product.amount_suq || 0} pcs</p>
-                  <p><strong>የተገዛበት ዋጋ:</strong> ${product.cost || 'N/A'} birr</p>
-                  <p><strong>የተሸጠበት ዋጋ:</strong> ${product.selling || 'N/A'} birr</p>
-                  ${historyHtml ? `<p><strong>📦 Purchase History:</strong></p><ul>${historyHtml}</ul>` : '<p><em>No purchase history found.</em></p>'}
-                  ${additionHtml ? `<p><strong>➕ Added Stock:</strong></p><ul>${additionHtml}</ul>` : ''}
-                </div>
-              `;
-      
+                div.innerHTML = `
+                  <img src="${image}" alt="${product.name}" />
+                  <div class="product-details">
+                    <h1>${product.name || 'Unnamed Product'}</h1>
+                    <p><strong>Code:</strong> ${product.code || 'N/A'}</p>
+                    <p><strong>Store:</strong> ${product.amount_store || 0} pcs</p>
+                    <p><strong>Suq:</strong> ${product.amount_suq || 0} pcs</p>
+                    <p><strong>የተገዛበት ዋጋ:</strong> ${product.cost || 'N/A'} birr</p>
+                    <p><strong>የተሸጠበት ዋጋ:</strong> ${product.selling || 'N/A'} birr</p>
+                    ${historyHtml ? `<p><strong>📦 Purchase History:</strong></p><ul>${historyHtml}</ul>` : '<p><em>No purchase history found.</em></p>'}
+                    ${additionHtml ? `<p><strong>➕ Added Stock:</strong></p><ul>${additionHtml}</ul>` : ''}
+
+                    <div class="product-buttons">
+                      <button class="edit-btn">✏️ Edit</button>
+                      <button class="add-btn">➕ Add Product</button>
+                    </div>
+                  </div>
+                `;
+
+                const editBtn = div.querySelector(".edit-btn");
+                const addBtn = div.querySelector(".add-btn");
+
+                editBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  localStorage.setItem("selectedProductFull", JSON.stringify({ key, ...product }));
+                  window.location.href = "edit-product.html"; // <- your product edit page
+                });
+
+                addBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  localStorage.setItem("selectedProductFull", JSON.stringify({ key, ...product }));
+                  window.location.href = "add-product.html"; // <- your stock addition page
+                });
+
               div.addEventListener("click", () => {
                 const fullData = {
                   key,

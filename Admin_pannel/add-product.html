@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Product Amount</title>
+  <link rel="stylesheet" href="../common/header.css" />
+  <script src="../common/admincommon.j"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      padding: 20px;
+      background: #f8f8f8;
+    }
+
+    .form-container {
+      background: white;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      background-color: #28a745;
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1e7e34;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Add Product Amount</h2>
+    <label>Product</label>
+    <input type="text" id="name" disabled />
+    <label>Location</label>
+    <select id="location">
+      <option value="store">Store</option>
+      <option value="suq">Suq</option>
+    </select>
+    <label>Amount to Add</label>
+    <input type="number" id="amount" />
+
+    <button id="addBtn">Add Amount</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSncXH9TG_q9VyJcn377j7YKESFC-KChI",
+      authDomain: "byd-furniture-36585.firebaseapp.com",
+      databaseURL: "https://byd-furniture-36585-default-rtdb.firebaseio.com",
+      projectId: "byd-furniture-36585",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    firebase.auth().onAuthStateChanged(async user => {
+            if (!user) {
+              await firebase.auth().signInAnonymously().catch(err => {
+                console.error("Anonymous login failed", err);
+              });
+              return;
+            }})
+
+
+    const product = JSON.parse(localStorage.getItem("selectedProductFull"));
+    document.getElementById("name").value = product.name;
+
+    document.getElementById("addBtn").addEventListener("click", async () => {
+      const location = document.getElementById("location").value;
+      const amount = parseInt(document.getElementById("amount").value);
+      if (isNaN(amount) || amount <= 0) return alert("Enter a valid amount.");
+
+      const ref = db.ref("products/" + product.key);
+      const snap = await ref.once("value");
+      const current = snap.val();
+      const currentAmount = parseInt(current[`amount_${location}`] || 0);
+      const newAmount = currentAmount + amount;
+
+      await ref.update({
+        [`amount_${location}`]: newAmount
+      });
+
+      const logRef = db.ref("added_product").push();
+      await logRef.set({
+        code: product.code,
+        amount_added: amount,
+        location,
+        "new-amount": newAmount,
+        date_added: Date.now()
+      });
+
+      alert("Amount added successfully!");
+      window.history.back();
+    });
+  </script>
+</body>
+</html>

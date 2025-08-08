@@ -41,6 +41,30 @@
     flex-direction: column;
     gap: 6px;
   }
+  .product-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .product-buttons button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .edit-btn {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .add-btn {
+    background-color: #28a745;
+    color: white;
+  }
+  
   
   .product-details h1 {
     font-size: 1.2rem;

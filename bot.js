@@ -186,6 +186,46 @@ db.ref('purchases').on('child_added', async (snapshot) => {
 });
 
 
+// ─── Listen for amount updates ─────────────────────────────────────────────
+db.ref('products').on('child_changed', async (snapshot) => {
+  const product = snapshot.val();
+  const key = snapshot.key;
+
+  if (!product) return;
+
+  // Check if 'amount_store' or 'amount_suq' changed
+  const changedFields = Object.keys(product);
+  if (!changedFields.includes('amount_store') && !changedFields.includes('amount_suq')) {
+    return; // Not an amount change
+  }
+
+  for (let admin of adminChats) {
+    const chatId = admin.id;
+
+    const storeAmount = parseInt(product.amount_store) || 0;
+    const suqAmount = parseInt(product.amount_suq) || 0;
+
+    let caption = `📦 *✅ እቃ ብዛት ተስተካክሏል*\n`;
+    caption += `የእቃ ስም: *${product.name}*\n`;
+    caption += `🏬 Store: *${storeAmount}*\n`;
+    caption += `🏪 Suq: *${suqAmount}*\n`;
+    caption += `📅 ${new Date().toLocaleString()}`;
+
+    const photo = product.image?.startsWith('AgA') ? product.image : null;
+    if (photo) {
+      await bot.sendPhoto(chatId, photo, {
+        caption,
+        parse_mode: "Markdown"
+      });
+    } else {
+      await bot.sendMessage(chatId, caption, {
+        parse_mode: "Markdown"
+      });
+    }
+  }
+
+  console.log(`✅ Notified admins about amount change: ${key}`);
+});
 
 
 
